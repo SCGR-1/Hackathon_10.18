@@ -34,10 +34,12 @@ export default function Home() {
       <div style={{marginTop: "40px", padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "5px"}}>
         <h3>How it works:</h3>
         <ol>
-          <li><strong>Issue:</strong> Create credentials with employment/visa information</li>
-          <li><strong>Deploy:</strong> Store credential hash on Algorand blockchain</li>
-          <li><strong>Verify:</strong> Check credential authenticity against blockchain</li>
+          <li><strong>Issue:</strong> Create credentials with employment/visa information and issue directly to blockchain</li>
+          <li><strong>Verify:</strong> Check credential authenticity against blockchain or search by user address</li>
         </ol>
+        <p style={{marginTop: "15px", fontStyle: "italic", color: "#666"}}>
+          ✅ Fully automated - no CLI commands needed! Running on LocalNet for instant transactions.
+        </p>
       </div>
     </main>
   )

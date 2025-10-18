@@ -92,20 +92,16 @@ npm run dev
 ### Issuing Credentials
 
 1. Navigate to `/issuer` page
-2. Select credential type (Visa, Education, or Employment)
+2. Select credential type (Visa or Education)
 3. Fill in credential details:
    - Credential ID (unique identifier)
    - Issuer (Algorand address)
    - Subject (Algorand address)
    - Expiration date
-   - IPFS CID (optional, for off-chain storage)
    - Claim data (JSON) - use templates for each type
-4. Generate hash and schema code for the credential
-5. Use the deploy script to issue on blockchain:
+4. Click "🚀 Issue to Blockchain" to automatically issue the credential
 
-```bash
-algokit project run issue_demo -- <CRED_ID> <SUBJECT_ADDR> <SCHEMA_CODE> <HASH_HEX> <EXPIRES_UNIX> <CID_POINTER>
-```
+The web interface handles all the complexity of generating hashes, schema codes, and blockchain transactions automatically.
 
 ### Verifying Credentials
 

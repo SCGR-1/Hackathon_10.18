@@ -10,8 +10,6 @@ build = ['hackathon1018-contracts', 'hackathon1018-frontend']
 lint = "poetry -C projects/cred_contracts run ruff . && poetry -C projects/cred_contracts run black --check ."
 test = "poetry -C projects/cred_contracts run pytest -q"
 compile_contracts = "poetry -C projects/cred_contracts run python -m projects.cred_contracts.src.deploy --compile"
-issue_demo = "poetry -C projects/cred_contracts run python -m projects.cred_contracts.src.deploy --issue demo-1234 <SUBJECT_ADDR> <SCHEMA_CODE> <HASH_HEX> <EXPIRES_UNIX> <CID_POINTER>"
-revoke_demo = "poetry -C projects/cred_contracts run python -m projects.cred_contracts.src.deploy --revoke demo-1234"
 
 [project.deploy]
 command = "poetry -C projects/cred_contracts run python -m projects.cred_contracts.src.deploy --deploy"
