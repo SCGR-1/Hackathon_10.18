@@ -65,7 +65,7 @@ export default function Wallet() {
             assetId: cred.nftAsaId,
             assetName: `CRD-${cred.credentialId}`,
             unitName: 'CRD',
-            metadataUrl: `https://api.educhain.com/metadata/${cred.credentialId}`,
+            metadataUrl: `https://educhain.app/nft/${cred.credentialId}`,
             credentialId: cred.credentialId,
             credentialType: cred.schemaCode === 1 ? 'VisaCredential' : 'EducationCredential',
             issuer: cred.issuer || 'Unknown',
@@ -124,81 +124,82 @@ export default function Wallet() {
         ) : (
           <>
             <div style={{marginBottom: "20px"}}>
-              <Link href="/" style={{
-                display: "inline-flex",
-                alignItems: "center",
-                padding: "8px 16px",
-                backgroundColor: "#f0f0f0",
-                color: "#333",
-                textDecoration: "none",
-                borderRadius: "5px",
-                border: "1px solid #ddd"
-              }}>
-                ← Back to Home
-              </Link>
+                     <Link href="/" style={{
+                       display: "inline-flex",
+                       alignItems: "center",
+                       padding: "10px 20px",
+                       backgroundColor: "#f8f9fa",
+                       color: "#495057",
+                       textDecoration: "none",
+                       borderRadius: "8px",
+                       border: "1px solid #dee2e6",
+                       fontSize: "14px",
+                       fontWeight: "500",
+                       transition: "all 0.2s ease",
+                       boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                     }}>
+                       ← Back to Home
+                     </Link>
             </div>
             
-            <h1>🎨 My NFTs</h1>
+            <h1>My NFTs</h1>
             <p style={{color: "#666", marginBottom: "30px"}}>
               View your commemorative credential NFTs. Enter your Algorand address to see all NFTs you've received from issued credentials.
             </p>
 
-            <div style={{
-              backgroundColor: "#f8f9fa",
-              padding: "20px",
-              borderRadius: "10px",
-              marginBottom: "30px",
-              border: "1px solid #e9ecef"
-            }}>
-              {userRole === 'Student' ? (
-                <div>
-                  <h3 style={{marginTop: 0}}>🎨 Your NFT Collection</h3>
-                  <p style={{margin: "10px 0", color: "#666"}}>
-                    Your NFTs are automatically loaded from your student address.
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <h3 style={{marginTop: 0}}>🔍 Find My NFTs</h3>
-                  <form onSubmit={handleSearch}>
-                    <div style={{marginBottom: "15px"}}>
-                      <label style={{display: "block", marginBottom: "5px", fontWeight: "500"}}>
-                        Your Algorand Address:
-                      </label>
-                      <input 
-                        type="text" 
-                        value={userAddress}
-                        onChange={(e) => setUserAddress(e.target.value)}
-                        placeholder="Enter your Algorand address to find your NFTs..."
-                        style={{
-                          width: "100%", 
-                          padding: "12px", 
-                          border: "1px solid #ddd",
-                          borderRadius: "5px",
-                          fontSize: "14px"
-                        }}
-                      />
-                    </div>
-                    <button 
-                      type="submit"
-                      disabled={isLoadingNfts}
-                      style={{
-                        backgroundColor: isLoadingNfts ? "#ccc" : "#6f42c1",
-                        color: "white",
-                        border: "none",
-                        padding: "12px 24px",
-                        borderRadius: "5px",
-                        cursor: isLoadingNfts ? "not-allowed" : "pointer",
-                        fontSize: "14px",
-                        fontWeight: "500"
-                      }}
-                    >
-                      {isLoadingNfts ? "🔍 Searching..." : "🔍 Find My NFTs"}
-                    </button>
-                  </form>
-                </div>
-              )}
-            </div>
+                   {userRole !== 'Student' && (
+                     <div style={{
+                       backgroundColor: "#f8f9fa",
+                       padding: "20px",
+                       borderRadius: "10px",
+                       marginBottom: "30px",
+                       border: "1px solid #e9ecef"
+                     }}>
+                       <div>
+                         <h3 style={{marginTop: 0}}>🔍 Find My NFTs</h3>
+                         <form onSubmit={handleSearch}>
+                           <div style={{marginBottom: "15px"}}>
+                             <label style={{display: "block", marginBottom: "5px", fontWeight: "500"}}>
+                               Your Algorand Address:
+                             </label>
+                             <input 
+                               type="text" 
+                               value={userAddress}
+                               onChange={(e) => setUserAddress(e.target.value)}
+                               placeholder="Enter your Algorand address to find your NFTs..."
+                             style={{
+                               width: "100%", 
+                               padding: "12px", 
+                               border: "1px solid #ddd",
+                               borderRadius: "8px",
+                               fontSize: "14px",
+                               transition: "border-color 0.2s ease",
+                               boxSizing: "border-box"
+                             }}
+                             />
+                           </div>
+                           <button 
+                             type="submit"
+                             disabled={isLoadingNfts}
+                             style={{
+                               backgroundColor: isLoadingNfts ? "#ccc" : "#6f42c1",
+                               color: "white",
+                               border: "none",
+                               padding: "12px 24px",
+                               borderRadius: "8px",
+                               cursor: isLoadingNfts ? "not-allowed" : "pointer",
+                               fontSize: "14px",
+                               fontWeight: "500",
+                               transition: "all 0.2s ease",
+                               boxShadow: isLoadingNfts ? "none" : "0 2px 4px rgba(111,66,193,0.2)"
+                             }}
+                           >
+                             {isLoadingNfts ? "🔍 Searching..." : "🔍 Find My NFTs"}
+                           </button>
+                         </form>
+                       </div>
+                     </div>
+                   )}
 
             {result && (
               <div style={{
@@ -304,25 +305,6 @@ export default function Wallet() {
                         </div>
                       </div>
 
-                      <div style={{
-                        marginTop: "15px",
-                        paddingTop: "15px",
-                        borderTop: "1px solid #e9ecef"
-                      }}>
-                        <a 
-                          href={nft.metadataUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            color: "#007bff",
-                            textDecoration: "none",
-                            fontSize: "12px",
-                            fontWeight: "500"
-                          }}
-                        >
-                          📄 View Metadata →
-                        </a>
-                      </div>
                     </div>
                   ))}
                 </div>

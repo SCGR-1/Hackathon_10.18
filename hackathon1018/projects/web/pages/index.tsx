@@ -32,35 +32,47 @@ export default function Home() {
             <div style={{display: "flex", gap: "20px", marginTop: "20px"}}>
               {userRole !== 'Student' && (
                 <Link href="/issuer" style={{
-                  padding: "10px 20px", 
+                  padding: "12px 24px", 
                   backgroundColor: "#0070f3", 
                   color: "white", 
                   textDecoration: "none", 
-                  borderRadius: "5px"
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 2px 4px rgba(0,112,243,0.2)"
                 }}>
                   Issue {userRole === 'Institution' ? 'Education' : 'Visa'} Credential
                 </Link>
               )}
               
               <Link href="/verify" style={{
-                padding: "10px 20px", 
+                padding: "12px 24px", 
                 backgroundColor: "#28a745", 
                 color: "white", 
                 textDecoration: "none", 
-                borderRadius: "5px"
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                transition: "all 0.2s ease",
+                boxShadow: "0 2px 4px rgba(40,167,69,0.2)"
               }}>
                 Verify Credential
               </Link>
               
               {userRole === 'Student' && (
                 <Link href="/wallet" style={{
-                  padding: "10px 20px", 
+                  padding: "12px 24px", 
                   backgroundColor: "#6f42c1", 
                   color: "white", 
                   textDecoration: "none", 
-                  borderRadius: "5px"
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 2px 4px rgba(111,66,193,0.2)"
                 }}>
-                  🎨 My NFTs
+                  My NFTs
                 </Link>
               )}
             </div>

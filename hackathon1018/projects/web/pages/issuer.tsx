@@ -70,7 +70,7 @@ export default function Issuer() {
 
   const handleIssueToBlockchain = async () => {
     if (!credential.credentialId?.trim() || !credential.subject?.trim() || !credential.expiresAt?.trim()) {
-      setResult("❌ Please fill in all required fields:\n- Credential ID (e.g., visa-12345)\n- Subject (Algorand address)\n- Valid From (date and time)\n- Expires At (date and time)")
+      setResult("❌ Please fill in all required fields:\n- Credential ID (e.g., visa-12345)\n- Subject (Algorand address)\n- Start On (date and time)\n- Ends On (date and time)")
       return
     }
 
@@ -86,9 +86,6 @@ export default function Issuer() {
       const schemaCode = getSchemaCode(credentialType)
       const expiresAtUnix = Math.floor(new Date(credential.expiresAt).getTime() / 1000)
       
-      // Create metadata URL for the NFT
-      const metadataUrl = `https://api.educhain.com/metadata/${credential.credentialId}`
-      
       const result = await mintNftAndIssueCredential({
         credentialId: credential.credentialId,
         subject: credential.subject,
@@ -98,7 +95,7 @@ export default function Issuer() {
         cidPointer: "",
         claim: credential.claim,
         validFrom: credential.validFrom
-      }, metadataUrl)
+      })
 
       // Create block explorer link (for TestNet/MainNet)
       const explorerBaseUrl = process.env.NEXT_PUBLIC_ALGOD_SERVER?.includes('testnet') 
@@ -112,7 +109,6 @@ export default function Issuer() {
 • Asset ID: ${result.nftAsaId}
 • Unit Name: CRD
 • Asset Name: CRD-${credential.credentialId}
-• Metadata URL: ${metadataUrl}
 
 📜 Credential Details:
 • Transaction ID: ${result.txId}
@@ -230,7 +226,15 @@ Please check:
             type="text" 
             value={credential.credentialId}
             onChange={(e) => setCredential({...credential, credentialId: e.target.value})}
-            style={{width: "100%", padding: "5px"}}
+            style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
             placeholder="e.g., visa-12345, edu-67890"
           />
         </div>
@@ -241,7 +245,15 @@ Please check:
             type="text" 
             value={credential.issuer || "KYK6GIIY7JXHCX2VOQF2PFZJH4B5EL5KHCJ7CFSF7K7TZKONGWPUBA6OSM"}
             onChange={(e) => setCredential({...credential, issuer: e.target.value})}
-            style={{width: "100%", padding: "5px"}}
+            style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
             placeholder="ALGORAND_ADDRESS_HERE"
           />
           <small style={{color: "#666"}}>Using LocalNet admin address by default</small>
@@ -253,45 +265,57 @@ Please check:
             type="text" 
             value={credential.subject}
             onChange={(e) => setCredential({...credential, subject: e.target.value})}
-            style={{width: "100%", padding: "5px"}}
+            style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
             placeholder="ALGORAND_ADDRESS_HERE"
           />
         </div>
         
         <div style={{marginBottom: "10px"}}>
-          <label>Valid From:</label>
+          <label>Start On:</label>
           <input 
             type="datetime-local" 
             value={credential.validFrom || new Date().toISOString().slice(0, 16)}
             onChange={(e) => setCredential({...credential, validFrom: e.target.value})}
-            style={{width: "100%", padding: "5px"}}
+            style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
           />
         </div>
         
         <div style={{marginBottom: "10px"}}>
-          <label>Expires At:</label>
+          <label>Ends On:</label>
           <input 
             type="datetime-local" 
             value={credential.expiresAt}
             onChange={(e) => setCredential({...credential, expiresAt: e.target.value})}
-            style={{width: "100%", padding: "5px"}}
+            style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
           />
         </div>
 
         
         <div style={{marginBottom: "10px"}}>
-          <label>Claim Data:</label>
-          <button 
-            type="button"
-            onClick={() => {
-              const template = getClaimTemplate(credentialType)
-              setClaimData(template)
-              setCredential({...credential, claim: template})
-            }}
-            style={{marginLeft: "10px", padding: "5px"}}
-          >
-            Use Template
-          </button>
           
           {credentialType === 'VisaCredential' && (
             <div style={{marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px"}}>
@@ -301,7 +325,15 @@ Please check:
                   type="text" 
                   value={claimData.visaType || ""}
                   onChange={(e) => updateClaimField('visaType', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., Work Visa"
                 />
               </div>
@@ -311,7 +343,15 @@ Please check:
                   type="text" 
                   value={claimData.country || ""}
                   onChange={(e) => updateClaimField('country', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., USA"
                 />
               </div>
@@ -321,7 +361,15 @@ Please check:
                   type="text" 
                   value={claimData.visaNumber || ""}
                   onChange={(e) => updateClaimField('visaNumber', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., V123456789"
                 />
               </div>
@@ -331,7 +379,15 @@ Please check:
                   type="text" 
                   value={claimData.issuedBy || ""}
                   onChange={(e) => updateClaimField('issuedBy', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., US Embassy"
                 />
               </div>
@@ -339,53 +395,76 @@ Please check:
           )}
           
           {credentialType === 'EducationCredential' && (
-            <div style={{marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px"}}>
-              <div>
+            <div style={{marginTop: "10px"}}>
+              <div style={{marginBottom: "10px"}}>
                 <label>Institution:</label>
                 <input 
                   type="text" 
                   value={claimData.institution || ""}
                   onChange={(e) => updateClaimField('institution', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., University of Example"
                 />
               </div>
-              <div>
+              <div style={{marginBottom: "10px"}}>
                 <label>Program:</label>
                 <input 
                   type="text" 
                   value={claimData.program || ""}
                   onChange={(e) => updateClaimField('program', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., Bachelor of Computer Science"
                 />
               </div>
-              <div>
+              <div style={{marginBottom: "10px"}}>
                 <label>Degree:</label>
                 <input 
                   type="text" 
                   value={claimData.degree || ""}
                   onChange={(e) => updateClaimField('degree', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., BSc"
                 />
               </div>
-              <div>
-                <label>Graduated On:</label>
-                <input 
-                  type="date" 
-                  value={claimData.graduatedOn || ""}
-                  onChange={(e) => updateClaimField('graduatedOn', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
-                />
-              </div>
-              <div>
+              <div style={{marginBottom: "10px"}}>
                 <label>GPA:</label>
                 <input 
                   type="text" 
                   value={claimData.gpa || ""}
                   onChange={(e) => updateClaimField('gpa', e.target.value)}
-                  style={{width: "100%", padding: "5px"}}
+                  style={{
+            width: "100%", 
+            padding: "12px", 
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            fontSize: "14px",
+            transition: "border-color 0.2s ease",
+            boxSizing: "border-box"
+          }}
                   placeholder="e.g., 3.8"
                 />
               </div>
@@ -394,7 +473,55 @@ Please check:
         </div>
         
         <div style={{marginTop: "20px", display: "flex", gap: "10px"}}>
-          <button type="submit">Generate Hash & Schema Code</button>
+          <button 
+            type="button"
+            onClick={() => {
+              // Auto-fill with demo data
+              const demoData = credentialType === 'EducationCredential' 
+                ? {
+                    institution: "Stanford University",
+                    program: "Bachelor of Computer Science",
+                    degree: "BSc",
+                    gpa: "3.8"
+                  }
+                : {
+                    visaType: "Student Visa",
+                    country: "United States",
+                    visaNumber: "F123456789",
+                    issuedBy: "US Consulate"
+                  }
+              
+              setClaimData(demoData)
+              
+              // Set dates: Start On = today, Ends On = 1 year later
+              const today = new Date()
+              const oneYearLater = new Date(today)
+              oneYearLater.setFullYear(today.getFullYear() + 1)
+              
+              setCredential(prev => ({
+                ...prev,
+                credentialId: `demo-${Date.now()}`,
+                claim: demoData,
+                validFrom: today.toISOString().slice(0, 16), // Format for datetime-local
+                expiresAt: oneYearLater.toISOString().slice(0, 16) // Format for datetime-local
+              }))
+            }}
+            style={{
+              backgroundColor: "#6c757d",
+              color: "white",
+              border: "none",
+              padding: "12px 24px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              flex: "1",
+              fontSize: "14px",
+              fontWeight: "500",
+              transition: "all 0.2s ease",
+              boxShadow: "0 2px 4px rgba(108,117,125,0.2)"
+            }}
+          >
+            📝 Use Template for Demo
+          </button>
           <button 
             type="button"
             onClick={handleIssueToBlockchain}
@@ -403,9 +530,14 @@ Please check:
               backgroundColor: isIssuing ? "#ccc" : "#0070f3",
               color: "white",
               border: "none",
-              padding: "10px 20px",
-              borderRadius: "5px",
-              cursor: isIssuing ? "not-allowed" : "pointer"
+              padding: "12px 24px",
+              borderRadius: "8px",
+              cursor: isIssuing ? "not-allowed" : "pointer",
+              flex: "2",
+              fontSize: "14px",
+              fontWeight: "500",
+              transition: "all 0.2s ease",
+              boxShadow: isIssuing ? "none" : "0 2px 4px rgba(0,112,243,0.2)"
             }}
           >
             {isIssuing ? "🔄 Minting NFT & Issuing..." : "🎨 Mint NFT & Issue Credential"}
@@ -421,7 +553,7 @@ Please check:
           border: `1px solid ${result.startsWith("✅") ? "#00cc00" : (result.startsWith("🔄") ? "#ffcc00" : (result.startsWith("❌") ? "#ff0000" : "#ccc"))}`,
           borderRadius: "5px"
         }}>
-          <h3>Result:</h3>
+          <h3>Success!</h3>
           <pre style={{whiteSpace: "pre-wrap", wordBreak: "break-word"}}>{result}</pre>
         </div>
       )}

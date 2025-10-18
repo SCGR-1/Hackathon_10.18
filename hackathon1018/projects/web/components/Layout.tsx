@@ -71,13 +71,16 @@ export default function Layout({ children }: LayoutProps) {
               <button
                 onClick={() => setShowLoginModal(true)}
                 style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#007bff',
+                  padding: '10px 20px',
+                  backgroundColor: '#0070f3',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '5px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '0.9rem'
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(0,112,243,0.2)'
                 }}
               >
                 Log In
@@ -88,13 +91,16 @@ export default function Layout({ children }: LayoutProps) {
               <button
                 onClick={logout}
                 style={{
-                  padding: '0.5rem 1rem',
+                  padding: '10px 20px',
                   backgroundColor: '#dc3545',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '5px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  fontSize: '0.9rem'
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(220,53,69,0.2)'
                 }}
               >
                 Logout
@@ -174,10 +180,9 @@ export default function Layout({ children }: LayoutProps) {
                   cursor: 'pointer',
                   fontSize: '1rem',
                   fontWeight: '500',
-                  transition: 'background-color 0.2s'
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(40,167,69,0.2)'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
               >
                 🏫 Institution
                 <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
@@ -189,17 +194,16 @@ export default function Layout({ children }: LayoutProps) {
                 onClick={() => handleLogin('Authority')}
                 style={{
                   padding: '1rem',
-                  backgroundColor: '#007bff',
+                  backgroundColor: '#0070f3',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontSize: '1rem',
                   fontWeight: '500',
-                  transition: 'background-color 0.2s'
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(0,112,243,0.2)'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
               >
                 🏛️ Authority
                 <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
@@ -218,10 +222,9 @@ export default function Layout({ children }: LayoutProps) {
                   cursor: 'pointer',
                   fontSize: '1rem',
                   fontWeight: '500',
-                  transition: 'background-color 0.2s'
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(111,66,193,0.2)'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#5a32a3'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6f42c1'}
               >
                 🎓 Student
                 <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
@@ -299,11 +302,12 @@ export default function Layout({ children }: LayoutProps) {
                 placeholder="Enter your Algorand address..."
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: '12px',
                   border: '1px solid #ddd',
-                  borderRadius: '5px',
+                  borderRadius: '8px',
                   fontSize: '14px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s ease'
                 }}
               />
               <small style={{ color: '#666', fontSize: '12px', marginTop: '0.25rem', display: 'block' }}>
@@ -316,15 +320,16 @@ export default function Layout({ children }: LayoutProps) {
               disabled={!studentAddress.trim()}
               style={{
                 width: '100%',
-                padding: '0.75rem',
+                padding: '12px 24px',
                 backgroundColor: studentAddress.trim() ? '#6f42c1' : '#ccc',
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
+                borderRadius: '8px',
                 cursor: studentAddress.trim() ? 'pointer' : 'not-allowed',
-                fontSize: '1rem',
+                fontSize: '14px',
                 fontWeight: '500',
-                transition: 'background-color 0.2s'
+                transition: 'all 0.2s ease',
+                boxShadow: studentAddress.trim() ? '0 2px 4px rgba(111,66,193,0.2)' : 'none'
               }}
             >
               🎓 Login as Student
