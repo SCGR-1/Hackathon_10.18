@@ -1,0 +1,10 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 2.1.6
+_src_path: gh:algorandfoundation/algokit-fullstack-template
+author_email: wulichun0226@gmail.com
+author_name: Lichun
+contract_name: init_contract
+deployment_language: python
+preset_name: starter
+project_name: hackathon1018
+
