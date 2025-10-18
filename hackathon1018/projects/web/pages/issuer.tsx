@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Credential, CredentialType, hashCredential, getSchemaCode } from "../lib/cred"
 import { issueCredential, ADMIN_ADDRESS } from "../lib/blockchain"
+import Link from "next/link"
 
 export default function Issuer() {
   const [credentialType, setCredentialType] = useState<CredentialType>('VisaCredential')
@@ -109,6 +110,21 @@ Please ensure:
 
   return (
     <main style={{maxWidth:720, margin:"40px auto", fontFamily:"ui-sans-serif"}}>
+      <div style={{marginBottom: "20px"}}>
+        <Link href="/" style={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "8px 16px",
+          backgroundColor: "#f0f0f0",
+          color: "#333",
+          textDecoration: "none",
+          borderRadius: "5px",
+          border: "1px solid #ddd"
+        }}>
+          ← Back to Home
+        </Link>
+      </div>
+      
       <h1>Issue Credential</h1>
       
       <div style={{marginBottom: "20px"}}>

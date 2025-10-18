@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Credential, hashCredential } from "../lib/cred"
 import { readBox, CredentialRecord, searchCredentialsBySubject } from "../lib/algorand"
 import { searchCredentialsBySubjectLocalNet, verifyCredentialLocalNet } from "../lib/blockchain"
+import Link from "next/link"
 
 const APP_ID = Number(process.env.NEXT_PUBLIC_APP_ID || 0)
 
@@ -126,6 +127,21 @@ ${box.cidPointer ? `• IPFS CID: ${box.cidPointer}` : ''}`)
 
   return (
     <main style={{maxWidth:720, margin:"40px auto", fontFamily:"ui-sans-serif"}}>
+      <div style={{marginBottom: "20px"}}>
+        <Link href="/" style={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "8px 16px",
+          backgroundColor: "#f0f0f0",
+          color: "#333",
+          textDecoration: "none",
+          borderRadius: "5px",
+          border: "1px solid #ddd"
+        }}>
+          ← Back to Home
+        </Link>
+      </div>
+      
       <h1>Verify Credential</h1>
       
       <div style={{marginBottom: "20px"}}>
