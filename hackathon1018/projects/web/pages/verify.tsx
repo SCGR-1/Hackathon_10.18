@@ -12,6 +12,23 @@ export default function Verify() {
     const txt = (new FormData(e.currentTarget).get("json") as string) || ""
     try {
       const cred: Credential = JSON.parse(txt)
+      
+      // Demo mode when APP_ID is 0
+      if (APP_ID === 0) {
+        return setResult(`⚠️ Demo Mode - Smart contract not deployed yet
+        
+To enable full verification:
+1. Deploy smart contract: algokit project deploy testnet
+2. Set NEXT_PUBLIC_APP_ID in .env.local
+3. Restart frontend
+
+Credential parsed successfully:
+• Type: ${cred.type}
+• ID: ${cred.credentialId}
+• Issuer: ${cred.issuer}
+• Subject: ${cred.subject}`)
+      }
+      
       const box: CredentialRecord | null = await readBox(APP_ID, cred.credentialId)
       
       if (!box) return setResult("❌ Credential not found on blockchain")
