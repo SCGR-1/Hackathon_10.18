@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "cred-contracts"
+version = "0.1.0"
+packages = [{ include = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pyteal = "^0.26.1"
+algosdk = "^2.4.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+black = "^24.8.0"
+ruff = "^0.6.0"
