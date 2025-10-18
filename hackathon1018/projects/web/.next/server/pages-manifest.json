@@ -2,7 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/wallet": "pages/wallet.js",
   "/": "pages/index.js",
-  "/verify": "pages/verify.js"
+  "/wallet": "pages/wallet.js",
+  "/verify": "pages/verify.js",
+  "/issuer": "pages/issuer.js"
 }
