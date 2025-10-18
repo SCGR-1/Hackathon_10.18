@@ -17,11 +17,12 @@ interface NFT {
 }
 
 export default function Wallet() {
-  const { userRole, isLoading } = useAuth()
+  const { userRole, isLoading, isDarkMode } = useAuth()
   const [userAddress, setUserAddress] = useState('')
   const [nfts, setNfts] = useState<NFT[]>([])
   const [isLoadingNfts, setIsLoadingNfts] = useState(false)
   const [result, setResult] = useState('')
+  const [filterType, setFilterType] = useState<'All' | 'Education' | 'Visa' | 'Employment'>('All')
 
   // Auto-load NFTs for students
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function Wallet() {
             unitName: 'CRD',
             metadataUrl: `https://educhain.app/nft/${cred.credentialId}`,
             credentialId: cred.credentialId,
-            credentialType: cred.schemaCode === 1 ? 'VisaCredential' : 'EducationCredential',
+            credentialType: cred.schemaCode === 1 ? 'VisaCredential' : cred.schemaCode === 2 ? 'EducationCredential' : 'EmploymentCredential',
             issuer: cred.issuer || 'Unknown',
             subject: cred.subject,
             issuedAt: new Date(cred.issuedAt * 1000).toISOString(),
@@ -107,45 +108,116 @@ export default function Wallet() {
   }
 
   const getCredentialTypeIcon = (type: string) => {
-    return type === 'VisaCredential' ? '🛂' : '🎓'
+    if (type === 'VisaCredential') return '🛂'
+    if (type === 'EducationCredential') return '🎓'
+    if (type === 'EmploymentCredential') return '💼'
+    return '📄'
   }
 
   const getCredentialTypeColor = (type: string) => {
-    return type === 'VisaCredential' ? '#007bff' : '#28a745'
+    if (type === 'VisaCredential') return '#007bff'
+    if (type === 'EducationCredential') return '#28a745'
+    if (type === 'EmploymentCredential') return '#f59e0b'
+    return '#6c757d'
+  }
+
+  const getFilteredNFTs = () => {
+    if (filterType === 'All') return nfts
+    if (filterType === 'Education') return nfts.filter(nft => nft.credentialType === 'EducationCredential')
+    if (filterType === 'Visa') return nfts.filter(nft => nft.credentialType === 'VisaCredential')
+    if (filterType === 'Employment') return nfts.filter(nft => nft.credentialType === 'EmploymentCredential')
+    return nfts
   }
 
   return (
     <Layout>
-      <div style={{maxWidth: 1000, margin: "40px auto", fontFamily: "ui-sans-serif"}}>
+      {/* Main Card Container */}
+      <div style={{maxWidth: 1000, margin: "0 auto", fontFamily: "ui-sans-serif", backgroundColor: isDarkMode ? '#2d1b69' : 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', color: isDarkMode ? '#ffffff' : 'inherit'}}>
         {isLoading ? (
           <div style={{padding: "20px", textAlign: "center"}}>
             <p>Loading...</p>
           </div>
         ) : (
           <>
-            <div style={{marginBottom: "20px"}}>
-                     <Link href="/" style={{
-                       display: "inline-flex",
-                       alignItems: "center",
-                       padding: "10px 20px",
-                       backgroundColor: "#f8f9fa",
-                       color: "#495057",
-                       textDecoration: "none",
-                       borderRadius: "8px",
-                       border: "1px solid #dee2e6",
-                       fontSize: "14px",
-                       fontWeight: "500",
-                       transition: "all 0.2s ease",
-                       boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-                     }}>
-                       ← Back to Home
-                     </Link>
-            </div>
             
-            <h1>My NFTs</h1>
-            <p style={{color: "#666", marginBottom: "30px"}}>
-              View your commemorative credential NFTs. Enter your Algorand address to see all NFTs you've received from issued credentials.
-            </p>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                backgroundColor: isDarkMode ? '#2d1b69' : '#f8f9fa',
+                padding: '20px',
+                borderRadius: '12px',
+                border: 'none',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                <h1 style={{
+                  margin: 0,
+                  color: isDarkMode ? '#ffffff' : '#1f2937',
+                  fontSize: '28px',
+                  fontWeight: '600',
+                  textAlign: 'center'
+                }}>
+                  My NFTs {getFilteredNFTs().length > 0 && `(${getFilteredNFTs().length})`}
+                </h1>
+              </div>
+            </div>
+
+            {/* Filter Buttons */}
+            <div style={{ 
+              marginBottom: '20px', 
+              display: 'flex', 
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: '8px',
+                backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
+                padding: '4px',
+                borderRadius: '12px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                {(['All', 'Education', 'Visa', 'Employment'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFilterType(type)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: filterType === type 
+                        ? (isDarkMode ? '#8b5cf6' : '#7c3aed') 
+                        : 'transparent',
+                      color: filterType === type 
+                        ? '#ffffff' 
+                        : (isDarkMode ? '#ffffff' : '#374151'),
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s ease',
+                      boxShadow: filterType === type 
+                        ? '0 2px 4px rgba(124,58,237,0.3)' 
+                        : 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (filterType !== type) {
+                        e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (filterType !== type) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }
+                    }}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
 
                    {userRole !== 'Student' && (
                      <div style={{
@@ -170,7 +242,9 @@ export default function Wallet() {
                              style={{
                                width: "100%", 
                                padding: "12px", 
-                               border: "1px solid #ddd",
+                               backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+                               color: isDarkMode ? '#ffffff' : '#000000',
+                               border: isDarkMode ? "1px solid #4b5563" : "1px solid #ddd",
                                borderRadius: "8px",
                                fontSize: "14px",
                                transition: "border-color 0.2s ease",
@@ -182,7 +256,7 @@ export default function Wallet() {
                              type="submit"
                              disabled={isLoadingNfts}
                              style={{
-                               backgroundColor: isLoadingNfts ? "#ccc" : "#6f42c1",
+                               backgroundColor: isLoadingNfts ? "#ccc" : "#7c3aed",
                                color: "white",
                                border: "none",
                                padding: "12px 24px",
@@ -201,44 +275,32 @@ export default function Wallet() {
                      </div>
                    )}
 
-            {result && (
-              <div style={{
-                marginBottom: "20px", 
-                padding: "15px", 
-                backgroundColor: result.includes("✅") ? "#d4edda" : (result.includes("🔍") ? "#fff3cd" : "#f8d7da"),
-                border: `1px solid ${result.includes("✅") ? "#c3e6cb" : (result.includes("🔍") ? "#ffeaa7" : "#f5c6cb")}`,
-                borderRadius: "5px"
-              }}>
-                <p style={{margin: 0, fontWeight: "500"}}>{result}</p>
-              </div>
-            )}
 
-            {nfts.length > 0 && (
+            {getFilteredNFTs().length > 0 && (
               <div>
-                <h2 style={{marginBottom: "20px"}}>Your NFTs ({nfts.length})</h2>
                 <div style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
                   gap: "20px"
                 }}>
-                  {nfts.map((nft, index) => (
+                  {getFilteredNFTs().map((nft, index) => (
                     <div 
                       key={nft.assetId}
                       style={{
-                        backgroundColor: "white",
-                        border: "1px solid #e9ecef",
+                        backgroundColor: isDarkMode ? '#1f2937' : 'white',
+                        border: isDarkMode ? '1px solid #374151' : '1px solid #e9ecef',
                         borderRadius: "10px",
                         padding: "20px",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                        boxShadow: isDarkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)',
                         transition: "transform 0.2s, box-shadow 0.2s"
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.transform = "translateY(-2px)"
-                        e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)"
+                        e.currentTarget.style.boxShadow = isDarkMode ? '0 4px 8px rgba(0,0,0,0.4)' : '0 4px 8px rgba(0,0,0,0.15)'
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.transform = "translateY(0)"
-                        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)"
+                        e.currentTarget.style.boxShadow = isDarkMode ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)'
                       }}
                     >
                       <div style={{
@@ -263,7 +325,7 @@ export default function Wallet() {
                           <p style={{
                             margin: 0,
                             fontSize: "12px",
-                            color: "#666",
+                            color: isDarkMode ? '#9ca3af' : '#666',
                             textTransform: "uppercase",
                             letterSpacing: "0.5px"
                           }}>
@@ -282,26 +344,26 @@ export default function Wallet() {
                           fontWeight: "500",
                           display: "inline-block"
                         }}>
-                          {nft.credentialType === 'VisaCredential' ? 'Visa Credential' : 'Education Credential'}
+                          {nft.credentialType === 'VisaCredential' ? 'Visa Credential' : nft.credentialType === 'EducationCredential' ? 'Education Credential' : 'Employment Credential'}
                         </div>
                       </div>
 
                       <div style={{
                         fontSize: "14px",
-                        color: "#666",
+                        color: isDarkMode ? '#d1d5db' : '#666',
                         lineHeight: "1.5"
                       }}>
                         <div style={{marginBottom: "8px"}}>
-                          <strong>Credential ID:</strong> {nft.credentialId}
+                          <strong style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>Credential ID:</strong> {nft.credentialId}
                         </div>
                         <div style={{marginBottom: "8px"}}>
-                          <strong>Issued:</strong> {formatDate(nft.issuedAt)}
+                          <strong style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>Start Date:</strong> {formatDate(nft.issuedAt)}
                         </div>
                         <div style={{marginBottom: "8px"}}>
-                          <strong>Expires:</strong> {formatDate(nft.expiresAt)}
+                          <strong style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>End Date:</strong> {formatDate(nft.expiresAt)}
                         </div>
                         <div style={{marginBottom: "8px"}}>
-                          <strong>Issuer:</strong> {nft.issuer.slice(0, 8)}...{nft.issuer.slice(-8)}
+                          <strong style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>Issuer:</strong> {nft.issuer.slice(0, 8)}...{nft.issuer.slice(-8)}
                         </div>
                       </div>
 
@@ -312,6 +374,28 @@ export default function Wallet() {
             )}
           </>
         )}
+      </div>
+
+      {/* Back Button - At bottom of card */}
+      <div style={{maxWidth: 1000, margin: "20px auto 60px", fontFamily: "ui-sans-serif"}}>
+        <div style={{marginBottom: "20px"}}>
+          <Link href="/" style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "10px 20px",
+            backgroundColor: isDarkMode ? "#374151" : "#f8f9fa",
+            color: isDarkMode ? "#ffffff" : "#495057",
+            textDecoration: "none",
+            borderRadius: "8px",
+            border: isDarkMode ? "1px solid #4b5563" : "1px solid #dee2e6",
+            fontSize: "14px",
+            fontWeight: "500",
+            transition: "all 0.2s ease",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+          }}>
+            ← Back to Home
+          </Link>
+        </div>
       </div>
     </Layout>
   )

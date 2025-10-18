@@ -7,7 +7,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { userRole, login, logout } = useAuth()
+  const { userRole, login, logout, isDarkMode, toggleDarkMode } = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showStudentModal, setShowStudentModal] = useState(false)
   const [studentAddress, setStudentAddress] = useState('')
@@ -40,16 +40,23 @@ export default function Layout({ children }: LayoutProps) {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDarkMode ? '#1a0b2e' : '#f8f9fa',
+      margin: 0,
+      padding: 0,
+      boxSizing: 'border-box'
+    }}>
       {/* Header */}
       <header style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e9ecef',
+        backgroundColor: '#312e81',
+        borderBottom: '1px solid #4c1d95',
         padding: '1rem 0',
-        marginBottom: '2rem'
+        marginBottom: '2rem',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none', color: '#333' }}>
+          <Link href="/" style={{ textDecoration: 'none', color: 'white' }}>
             <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>EduChain</h1>
           </Link>
           
@@ -68,50 +75,128 @@ export default function Layout({ children }: LayoutProps) {
             )}
             
             {!userRole && (
-              <button
-                onClick={() => setShowLoginModal(true)}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#0070f3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(0,112,243,0.2)'
-                }}
-              >
-                Log In
-              </button>
+              <>
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#8b5cf6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(139,92,246,0.3)'
+                  }}
+                >
+                  Log In
+                </button>
+                
+                {/* Dark Mode Toggle - Next to Login */}
+                <button
+                  onClick={toggleDarkMode}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: isDarkMode ? '#6366f1' : '#1f2937',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s ease',
+                    boxShadow: isDarkMode ? '0 4px 12px rgba(99,102,241,0.4)' : '0 4px 12px rgba(31,41,55,0.4)',
+                    marginLeft: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '48px',
+                    height: '48px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)'
+                    e.currentTarget.style.boxShadow = isDarkMode ? '0 6px 16px rgba(99,102,241,0.6)' : '0 6px 16px rgba(31,41,55,0.6)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                    e.currentTarget.style.boxShadow = isDarkMode ? '0 4px 12px rgba(99,102,241,0.4)' : '0 4px 12px rgba(31,41,55,0.4)'
+                  }}
+                  title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                  {isDarkMode ? '☀️' : '🌙'}
+                </button>
+              </>
             )}
             
             {userRole && (
-              <button
-                onClick={logout}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(220,53,69,0.2)'
-                }}
-              >
-                Logout
-              </button>
+              <>
+                <button
+                  onClick={logout}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 4px rgba(220,53,69,0.2)'
+                  }}
+                >
+                  Logout
+                </button>
+                
+                {/* Dark Mode Toggle - Next to Logout */}
+                <button
+                  onClick={toggleDarkMode}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: isDarkMode ? '#6366f1' : '#1f2937',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s ease',
+                    boxShadow: isDarkMode ? '0 4px 12px rgba(99,102,241,0.4)' : '0 4px 12px rgba(31,41,55,0.4)',
+                    marginLeft: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '48px',
+                    height: '48px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px) scale(1.05)'
+                    e.currentTarget.style.boxShadow = isDarkMode ? '0 6px 16px rgba(99,102,241,0.6)' : '0 6px 16px rgba(31,41,55,0.6)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                    e.currentTarget.style.boxShadow = isDarkMode ? '0 4px 12px rgba(99,102,241,0.4)' : '0 4px 12px rgba(31,41,55,0.4)'
+                  }}
+                  title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                  {isDarkMode ? '☀️' : '🌙'}
+                </button>
+              </>
             )}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
+      <main style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: '0 1rem 60px 1rem',
+        backgroundColor: isDarkMode ? '#1a0b2e' : 'transparent',
+        color: isDarkMode ? '#ffffff' : 'inherit'
+      }}>
         {children}
       </main>
 
@@ -134,10 +219,10 @@ export default function Layout({ children }: LayoutProps) {
         >
           <div 
             style={{
-              backgroundColor: 'white',
+              backgroundColor: isDarkMode ? '#1f2937' : 'white',
               padding: '2rem',
               borderRadius: '10px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+              boxShadow: isDarkMode ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 4px 20px rgba(0, 0, 0, 0.15)',
               maxWidth: '400px',
               width: '90%',
               position: 'relative'
@@ -154,7 +239,7 @@ export default function Layout({ children }: LayoutProps) {
                 border: 'none',
                 fontSize: '1.5rem',
                 cursor: 'pointer',
-                color: '#6c757d',
+                color: isDarkMode ? '#9ca3af' : '#6c757d',
                 padding: '0',
                 width: '30px',
                 height: '30px',
@@ -166,9 +251,56 @@ export default function Layout({ children }: LayoutProps) {
               ×
             </button>
             
-            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center' }}>Select Your Role</h2>
+            <h2 style={{ 
+              marginTop: 0, 
+              marginBottom: '1.5rem', 
+              textAlign: 'center',
+              color: isDarkMode ? '#ffffff' : '#000000'
+            }}>Select Your Role</h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <button
+                onClick={() => handleLogin('Student')}
+                style={{
+                  padding: '1rem',
+                  backgroundColor: '#6f42c1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(111,66,193,0.2)'
+                }}
+              >
+                🎓 Student
+                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
+                  Verify Credentials Only
+                </div>
+              </button>
+              
+              <button
+                onClick={() => handleLogin('Employer')}
+                style={{
+                  padding: '1rem',
+                  backgroundColor: '#ff6b35',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(255,107,53,0.2)'
+                }}
+              >
+                🏢 Employer
+                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
+                  Issue Employment Credentials
+                </div>
+              </button>
+              
               <button
                 onClick={() => handleLogin('Institution')}
                 style={{
@@ -210,27 +342,6 @@ export default function Layout({ children }: LayoutProps) {
                   Issue Visa Credentials
                 </div>
               </button>
-              
-              <button
-                onClick={() => handleLogin('Student')}
-                style={{
-                  padding: '1rem',
-                  backgroundColor: '#6f42c1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(111,66,193,0.2)'
-                }}
-              >
-                🎓 Student
-                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
-                  Verify Credentials Only
-                </div>
-              </button>
             </div>
           </div>
         </div>
@@ -255,10 +366,10 @@ export default function Layout({ children }: LayoutProps) {
         >
           <div 
             style={{
-              backgroundColor: 'white',
+              backgroundColor: isDarkMode ? '#1f2937' : 'white',
               padding: '2rem',
               borderRadius: '10px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+              boxShadow: isDarkMode ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 4px 20px rgba(0, 0, 0, 0.15)',
               maxWidth: '400px',
               width: '90%',
               position: 'relative'
@@ -275,7 +386,7 @@ export default function Layout({ children }: LayoutProps) {
                 border: 'none',
                 fontSize: '1.5rem',
                 cursor: 'pointer',
-                color: '#6c757d',
+                color: isDarkMode ? '#9ca3af' : '#6c757d',
                 padding: '0',
                 width: '30px',
                 height: '30px',
@@ -287,12 +398,22 @@ export default function Layout({ children }: LayoutProps) {
               ×
             </button>
             
-            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', color: '#6f42c1' }}>
+            <h2 style={{ 
+              marginTop: 0, 
+              marginBottom: '1.5rem', 
+              textAlign: 'center', 
+              color: isDarkMode ? '#ffffff' : '#6f42c1' 
+            }}>
               🎓 Student Login
             </h2>
             
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem', 
+                fontWeight: '500',
+                color: isDarkMode ? '#ffffff' : '#000000'
+              }}>
                 Your Algorand Address:
               </label>
               <input
@@ -303,14 +424,21 @@ export default function Layout({ children }: LayoutProps) {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: '1px solid #ddd',
+                  backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+                  color: isDarkMode ? '#ffffff' : '#000000',
+                  border: isDarkMode ? '1px solid #4b5563' : '1px solid #ddd',
                   borderRadius: '8px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
                   transition: 'border-color 0.2s ease'
                 }}
               />
-              <small style={{ color: '#666', fontSize: '12px', marginTop: '0.25rem', display: 'block' }}>
+              <small style={{ 
+                color: isDarkMode ? '#9ca3af' : '#666', 
+                fontSize: '12px', 
+                marginTop: '0.25rem', 
+                display: 'block' 
+              }}>
                 This address will be used to load your credentials and NFTs
               </small>
             </div>

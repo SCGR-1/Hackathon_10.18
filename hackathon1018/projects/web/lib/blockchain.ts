@@ -196,10 +196,27 @@ export async function revokeCredential(credentialId: string): Promise<string> {
     console.log('Simulating credential revocation for LocalNet...')
     console.log('Credential ID:', credentialId)
     
+    // Check if credential exists
+    const credential = issuedCredentials.get(credentialId)
+    if (!credential) {
+      throw new Error('Credential not found')
+    }
+    
+    // Mark credential as revoked
+    const updatedCredential = {
+      ...credential,
+      revoked: true,
+      revokedAt: Date.now()
+    }
+    
+    issuedCredentials.set(credentialId, updatedCredential)
+    saveCredentials(issuedCredentials) // Persist to localStorage
+    
     // Return a mock transaction ID for LocalNet
     const mockTxId = `LOCALNET_REVOKE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     console.log('✅ Credential revoked successfully (LocalNet simulation)')
+    console.log('Updated credential:', updatedCredential)
     return mockTxId
   } catch (error) {
     console.error("Error revoking credential:", error)
@@ -231,7 +248,7 @@ export async function searchCredentialsBySubjectLocalNet(subjectAddress: string)
       credentials.push({
         ...credentialData,
         issuer: ADMIN_ADDRESS,
-        credentialType: credentialData.schemaCode === 1 ? 'VisaCredential' : 'EducationCredential'
+        credentialType: credentialData.schemaCode === 1 ? 'VisaCredential' : credentialData.schemaCode === 2 ? 'EducationCredential' : 'EmploymentCredential'
       })
     }
   }
@@ -249,7 +266,7 @@ export async function verifyCredentialLocalNet(credentialId: string): Promise<an
     return {
       ...credential,
       issuer: ADMIN_ADDRESS,
-      credentialType: credential.schemaCode === 1 ? 'VisaCredential' : 'EducationCredential'
+      credentialType: credential.schemaCode === 1 ? 'VisaCredential' : credential.schemaCode === 2 ? 'EducationCredential' : 'EmploymentCredential'
     }
   }
   

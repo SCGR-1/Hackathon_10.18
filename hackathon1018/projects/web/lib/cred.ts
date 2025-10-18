@@ -1,4 +1,4 @@
-export type CredentialType = 'VisaCredential' | 'EducationCredential'
+export type CredentialType = 'VisaCredential' | 'EducationCredential' | 'EmploymentCredential'
 
 export type Credential = {
   type: CredentialType
@@ -13,12 +13,14 @@ export type Credential = {
 
 export const SCHEMA_CODES = {
   VISA: 1,
-  EDUCATION: 2
+  EDUCATION: 2,
+  EMPLOYMENT: 3
 } as const
 
 export const CREDENTIAL_TYPES = {
   [SCHEMA_CODES.VISA]: 'VisaCredential',
-  [SCHEMA_CODES.EDUCATION]: 'EducationCredential'
+  [SCHEMA_CODES.EDUCATION]: 'EducationCredential',
+  [SCHEMA_CODES.EMPLOYMENT]: 'EmploymentCredential'
 } as const
 
 export function stableStringify(input: unknown): string {
@@ -45,6 +47,7 @@ export function getSchemaCode(credentialType: CredentialType): number {
   switch (credentialType) {
     case 'VisaCredential': return SCHEMA_CODES.VISA
     case 'EducationCredential': return SCHEMA_CODES.EDUCATION
+    case 'EmploymentCredential': return SCHEMA_CODES.EMPLOYMENT
     default: throw new Error(`Unknown credential type: ${credentialType}`)
   }
 }

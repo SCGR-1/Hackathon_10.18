@@ -4,6 +4,5 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/wallet": "pages/wallet.js",
-  "/verify": "pages/verify.js",
-  "/issuer": "pages/issuer.js"
+  "/verify": "pages/verify.js"
 }
