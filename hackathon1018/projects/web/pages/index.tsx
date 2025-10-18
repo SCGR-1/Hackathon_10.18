@@ -19,7 +19,7 @@ export default function Home() {
     <Layout>
       <div style={{maxWidth:720, margin:"40px auto", fontFamily:"ui-sans-serif"}}>
         <h1>Student Credential Verification</h1>
-        <p>Blockchain-based credential verification system using Algorand</p>
+        <p>Blockchain-based credential verification system with commemorative NFTs using Algorand</p>
         
         {!userRole ? (
           <div style={{marginTop: "40px", padding: "20px", backgroundColor: "#fff3cd", border: "1px solid #ffeaa7", borderRadius: "5px"}}>
@@ -51,13 +51,19 @@ export default function Home() {
               }}>
                 Verify Credential
               </Link>
+              
+              {userRole === 'Student' && (
+                <Link href="/wallet" style={{
+                  padding: "10px 20px", 
+                  backgroundColor: "#6f42c1", 
+                  color: "white", 
+                  textDecoration: "none", 
+                  borderRadius: "5px"
+                }}>
+                  🎨 My NFTs
+                </Link>
+              )}
             </div>
-            
-            {userRole === 'Student' && (
-              <div style={{marginTop: "20px", padding: "15px", backgroundColor: "#e3f2fd", borderRadius: "5px"}}>
-                <p><strong>Student Access:</strong> You can only verify credentials. To issue credentials, please log in as an Institution or Authority.</p>
-              </div>
-            )}
           </div>
         )}
       </div>

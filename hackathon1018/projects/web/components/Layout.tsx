@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth, UserRole } from '../contexts/AuthContext'
 
@@ -9,11 +9,35 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { userRole, login, logout } = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showStudentModal, setShowStudentModal] = useState(false)
+  const [studentAddress, setStudentAddress] = useState('')
 
   const handleLogin = (role: UserRole) => {
-    login(role)
-    setShowLoginModal(false)
+    if (role === 'Student') {
+      setShowStudentModal(true)
+    } else {
+      login(role)
+      setShowLoginModal(false)
+    }
   }
+
+  const handleStudentLogin = () => {
+    if (studentAddress.trim()) {
+      // Store the student address in localStorage for this session
+      localStorage.setItem('studentAddress', studentAddress.trim())
+      login('Student')
+      setShowStudentModal(false)
+      setShowLoginModal(false) // Also close the main login modal
+      setStudentAddress('')
+    }
+  }
+
+  // Auto-fill student address from environment variable
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_STUDENT_ADDRESS) {
+      setStudentAddress(process.env.NEXT_PUBLIC_STUDENT_ADDRESS)
+    }
+  }, [])
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
@@ -205,6 +229,106 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Login Modal */}
+      {showStudentModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowStudentModal(false)}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              padding: '2rem',
+              borderRadius: '10px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+              maxWidth: '400px',
+              width: '90%',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowStudentModal(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#6c757d',
+                padding: '0',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ×
+            </button>
+            
+            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', color: '#6f42c1' }}>
+              🎓 Student Login
+            </h2>
+            
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                Your Algorand Address:
+              </label>
+              <input
+                type="text"
+                value={studentAddress}
+                onChange={(e) => setStudentAddress(e.target.value)}
+                placeholder="Enter your Algorand address..."
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '5px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <small style={{ color: '#666', fontSize: '12px', marginTop: '0.25rem', display: 'block' }}>
+                This address will be used to load your credentials and NFTs
+              </small>
+            </div>
+            
+            <button
+              onClick={handleStudentLogin}
+              disabled={!studentAddress.trim()}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: studentAddress.trim() ? '#6f42c1' : '#ccc',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: studentAddress.trim() ? 'pointer' : 'not-allowed',
+                fontSize: '1rem',
+                fontWeight: '500',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              🎓 Login as Student
+            </button>
           </div>
         </div>
       )}

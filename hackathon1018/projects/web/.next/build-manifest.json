@@ -27,15 +27,15 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/issuer": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/issuer.js"
-    ],
     "/verify": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/verify.js"
+    ],
+    "/wallet": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/wallet.js"
     ]
   },
   "ampFirstPages": []

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Credential, CredentialType, hashCredential, getSchemaCode } from "../lib/cred"
-import { issueCredential, ADMIN_ADDRESS } from "../lib/blockchain"
+import { mintNftAndIssueCredential } from "../lib/blockchain"
+import { ADMIN_ADDRESS } from "../lib/algorand"
 import Layout from "../components/Layout"
 import { useAuth } from "../contexts/AuthContext"
 import Link from "next/link"
@@ -78,14 +79,17 @@ export default function Issuer() {
     console.log('Claim data:', credential.claim)
 
     setIsIssuing(true)
-    setResult("🔄 Issuing credential to blockchain...")
+    setResult("🔄 Minting NFT and issuing credential to blockchain...")
 
     try {
       const hash = await hashCredential(credential)
       const schemaCode = getSchemaCode(credentialType)
       const expiresAtUnix = Math.floor(new Date(credential.expiresAt).getTime() / 1000)
       
-      const txId = await issueCredential({
+      // Create metadata URL for the NFT
+      const metadataUrl = `https://api.educhain.com/metadata/${credential.credentialId}`
+      
+      const result = await mintNftAndIssueCredential({
         credentialId: credential.credentialId,
         subject: credential.subject,
         schemaCode: schemaCode,
@@ -94,20 +98,40 @@ export default function Issuer() {
         cidPointer: "",
         claim: credential.claim,
         validFrom: credential.validFrom
-      })
+      }, metadataUrl)
 
-      setResult(`✅ Credential issued successfully!
+      // Create block explorer link (for TestNet/MainNet)
+      const explorerBaseUrl = process.env.NEXT_PUBLIC_ALGOD_SERVER?.includes('testnet') 
+        ? 'https://testnet.algoexplorer.io' 
+        : 'https://algoexplorer.io'
+      const explorerLink = `${explorerBaseUrl}/asset/${result.nftAsaId}`
 
-Transaction ID: ${txId}
-Credential ID: ${credential.credentialId}
-Subject: ${credential.subject}
-Schema Code: ${schemaCode}
-Hash: ${hash}
-Expires: ${credential.expiresAt}
+      setResult(`✅ Credential issued successfully with commemorative NFT!
 
-You can now verify this credential on the verify page!`)
+🎨 NFT Details:
+• Asset ID: ${result.nftAsaId}
+• Unit Name: CRD
+• Asset Name: CRD-${credential.credentialId}
+• Metadata URL: ${metadataUrl}
+
+📜 Credential Details:
+• Transaction ID: ${result.txId}
+• Credential ID: ${credential.credentialId}
+• Subject: ${credential.subject}
+• Schema Code: ${schemaCode}
+• Hash: ${hash}
+• Expires: ${credential.expiresAt}
+
+🔗 View NFT: ${explorerLink}
+
+The student has received a commemorative NFT representing this credential!`)
     } catch (err: any) {
-      setResult(`⚠️ ${err.message}`)
+      setResult(`⚠️ Failed to mint NFT and issue credential: ${err.message}
+
+Please check:
+• Student address is valid
+• All required fields are filled
+• Network connection is stable`)
     } finally {
       setIsIssuing(false)
     }
@@ -215,7 +239,7 @@ You can now verify this credential on the verify page!`)
           <label>Issuer (Algorand Address):</label>
           <input 
             type="text" 
-            value={credential.issuer || ADMIN_ADDRESS}
+            value={credential.issuer || "KYK6GIIY7JXHCX2VOQF2PFZJH4B5EL5KHCJ7CFSF7K7TZKONGWPUBA6OSM"}
             onChange={(e) => setCredential({...credential, issuer: e.target.value})}
             style={{width: "100%", padding: "5px"}}
             placeholder="ALGORAND_ADDRESS_HERE"
@@ -384,7 +408,7 @@ You can now verify this credential on the verify page!`)
               cursor: isIssuing ? "not-allowed" : "pointer"
             }}
           >
-            {isIssuing ? "🔄 Issuing..." : "🚀 Issue to Blockchain"}
+            {isIssuing ? "🔄 Minting NFT & Issuing..." : "🎨 Mint NFT & Issue Credential"}
           </button>
         </div>
       </form>
