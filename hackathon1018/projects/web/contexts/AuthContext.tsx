@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/router'
 
-export type UserRole = 'Institution' | 'Authority' | 'Student' | null
+export type UserRole = 'Institution' | 'Authority' | 'Employer' | 'Student' | null
 
 interface AuthContextType {
   userRole: UserRole
   login: (role: UserRole) => void
   logout: () => void
   isLoading: boolean
+  isDarkMode: boolean
+  toggleDarkMode: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -15,14 +17,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<UserRole>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const router = useRouter()
 
-  // Load user role from localStorage on mount
+  // Load user role and dark mode preference from localStorage on mount
   useEffect(() => {
     const savedRole = localStorage.getItem('userRole') as UserRole
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true'
+    
     if (savedRole) {
       setUserRole(savedRole)
     }
+    setIsDarkMode(savedDarkMode)
     setIsLoading(false)
   }, [])
 
@@ -38,8 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/')
   }
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode
+    setIsDarkMode(newDarkMode)
+    localStorage.setItem('darkMode', newDarkMode.toString())
+  }
+
   return (
-    <AuthContext.Provider value={{ userRole, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ userRole, login, logout, isLoading, isDarkMode, toggleDarkMode }}>
       {children}
     </AuthContext.Provider>
   )

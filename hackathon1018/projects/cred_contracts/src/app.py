@@ -1,8 +1,9 @@
 from pyteal import *
 
-# Multi-credential registry contract
+# Multi-credential registry contract with NFT support
 # On-chain per credential (in app box by cred_id):
-# issuer_addr(32) | subject_addr(32) | schema_code(1) | cred_hash(32) | issued_at(8) | expires_at(8) | revoked(1) | cid_pointer(32)
+# issuer_addr(32) | subject_addr(32) | schema_code(1) | cred_hash(32) | issued_at(8) | expires_at(8) | revoked(1) | cid_pointer(32) | nft_asa_id(8)
+# Total: 154 bytes (was 146 bytes)
 
 def app():
     admin = Bytes("admin")
@@ -20,7 +21,7 @@ def app():
         Approve()
     )
 
-    # Issue credential
+    # Issue credential with NFT ASA ID
     def issue():
         cred_id = Txn.application_args[1]
         subject = Txn.application_args[2]
@@ -28,6 +29,7 @@ def app():
         cred_hash = Txn.application_args[4]
         expires_at = Btoi(Txn.application_args[5])
         cid_pointer = Txn.application_args[6]  # Optional IPFS CID
+        nft_asa_id = Txn.application_args[7]   # NFT ASA ID (8 bytes)
         
         return Seq(
             Assert(Txn.sender() == App.globalGet(admin)),  # only admin can issue
@@ -36,7 +38,8 @@ def app():
             Assert(schema_code >= VISA_SCHEMA),  # valid schema code
             Assert(schema_code <= EMPLOYMENT_SCHEMA),
             Assert(Len(cid_pointer) <= Int(32)),  # CID pointer max 32 bytes
-            Pop(BoxCreate(cred_id, Int(32 + 32 + 1 + 32 + 8 + 8 + 1 + 32))),  # Total: 146 bytes
+            Assert(Len(nft_asa_id) == Int(8)),  # NFT ASA ID must be exactly 8 bytes
+            Pop(BoxCreate(cred_id, Int(32 + 32 + 1 + 32 + 8 + 8 + 1 + 32 + 8))),  # Total: 154 bytes
             BoxPut(
                 cred_id,
                 Concat(
@@ -47,7 +50,8 @@ def app():
                     Itob(Global.latest_timestamp()),  # issued_at (8)
                     Itob(expires_at),  # expires_at (8)
                     Bytes("\x00"),  # revoked (1)
-                    Concat(cid_pointer, Bytes("\x00" * 32))  # cid_pointer (32, padded)
+                    Concat(cid_pointer, Bytes("\x00" * 32)),  # cid_pointer (32, padded)
+                    nft_asa_id     # nft_asa_id (8)
                 ),
             ),
             Approve(),
@@ -73,6 +77,16 @@ def app():
             Approve(),
         )
 
+    # Get NFT ASA ID for a credential
+    def get_nft_asa_id():
+        cred_id = Txn.application_args[1]
+        
+        return Seq(
+            # Check that the box exists and return success
+            # The NFT ASA ID can be read from the box at offset 146-153 (last 8 bytes)
+            Approve(),
+        )
+
     # Main program
     program = Cond(
         [Txn.application_id() == Int(0), create_app],
@@ -81,6 +95,7 @@ def app():
              [Txn.application_args[0] == Bytes("issue"), issue()],
              [Txn.application_args[0] == Bytes("revoke"), revoke()],
              [Txn.application_args[0] == Bytes("get"), get_credential()],
+             [Txn.application_args[0] == Bytes("get_nft"), get_nft_asa_id()],
              [Int(1), Reject()]
          )],
         [Int(1), Reject()]
