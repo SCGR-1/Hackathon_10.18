@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Layout from '../components/Layout'
 import { useAuth, UserRole } from '../contexts/AuthContext'
-import { GraduationCap, Building, Shield, Wallet, CheckCircle, Users, Award, Zap, Lock, Globe } from 'lucide-react'
+import { GraduationCap, Shield, Wallet, CheckCircle, Users, Award, Zap, Lock, Globe } from 'lucide-react'
 import { useState } from 'react'
 import LoginModal from '../components/LoginModal'
 import StudentLoginModal from '../components/StudentLoginModal'
@@ -222,8 +222,8 @@ export default function Home() {
                   >
                     {userRole === 'Institution' ? <GraduationCap size={16} /> : 
                      userRole === 'Authority' ? <Shield size={16} /> : 
-                     <Building size={16} />}
-                    Issue {userRole === 'Institution' ? 'Education' : userRole === 'Authority' ? 'Visa' : 'Employment'} Credential
+                     <Award size={16} />}
+                    Issue {userRole === 'Institution' ? 'Education' : userRole === 'Authority' ? 'Visa' : 'Certification'} Credential
                   </button>
                 )}
                 <button
@@ -316,7 +316,7 @@ export default function Home() {
               </div>
               <h3 style={{margin: '0 0 15px 0', fontSize: '1.3rem'}}>1. Issue Credentials</h3>
               <p style={{margin: 0, opacity: 0.8, lineHeight: '1.6'}}>
-                Institutions, authorities, and employers issue verified credentials to students and employees using blockchain technology.
+                Institutions, authorities, and certifiers issue verified credentials to students and professionals using blockchain technology.
               </p>
             </div>
             

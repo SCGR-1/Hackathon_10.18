@@ -1,0 +1,15 @@
+# Environment Configuration Template
+# Copy this to .env.local in the web project root
+
+# Algorand LocalNet Configuration
+NEXT_PUBLIC_ALGOD_SERVER=http://localhost:4001
+NEXT_PUBLIC_ALGOD_TOKEN=
+NEXT_PUBLIC_INDEXER_SERVER=http://localhost:8980
+NEXT_PUBLIC_INDEXER_TOKEN=
+
+# Smart Contract Configuration
+NEXT_PUBLIC_APP_ID=1013
+NEXT_PUBLIC_ADMIN_ADDRESS=SACYCQTR3RVKZQOYYYPWEKS3AZZUOTHLRSSE4LGYEA5YPQRU26ZTIJIXBQ
+
+# Admin Account (Optional - will use LocalNet dispenser if not set)
+# NEXT_PUBLIC_ADMIN_MNEMONIC=your_mnemonic_here

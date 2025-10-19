@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
 import { Credential, CredentialType, hashCredential, getSchemaCode } from "../lib/cred"
 import { mintNftAndIssueCredential } from "../lib/blockchain"
-import { ADMIN_ADDRESS } from "../lib/algorand"
+import { ADMIN_ADDRESS, getAlgodClient } from "../lib/algorand"
+import { createCredentialASA, getCachedASAId } from "../lib/asa"
 import Layout from "../components/Layout"
 import { useAuth } from "../contexts/AuthContext"
 import Link from "next/link"
@@ -27,6 +28,8 @@ export default function Issuer() {
   const [isIssuing, setIsIssuing] = useState<boolean>(false)
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false)
   const [successData, setSuccessData] = useState<any>(null)
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = useState<string>("")
   const [claimData, setClaimData] = useState<any>({
     visaType: "Work Visa",
     country: "USA",
@@ -56,24 +59,22 @@ export default function Issuer() {
       }))
     } else if (userRole === 'Authority') {
       setCredentialType('VisaCredential')
-    } else if (userRole === 'Employer') {
-      setCredentialType('EmploymentCredential')
+    } else if (userRole === 'Certifier') {
+      setCredentialType('CertificationCredential')
       setClaimData({
-        company: "Tech Corp Inc.",
-        position: "Software Engineer",
-        department: "Engineering",
-        startDate: new Date().toISOString().split('T')[0],
-        salary: "$75,000"
+        certificationBody: "IELTS",
+        examType: "Academic",
+        score: "8.5",
+        validityPeriod: "2 years"
       })
       setCredential(prev => ({
         ...prev,
-        type: 'EmploymentCredential',
+        type: 'CertificationCredential',
         claim: {
-          company: "Tech Corp Inc.",
-          position: "Software Engineer",
-          department: "Engineering",
-          startDate: new Date().toISOString().split('T')[0],
-          salary: "$75,000"
+          certificationBody: "IELTS",
+          examType: "Academic",
+          score: "8.5",
+          validityPeriod: "2 years"
         }
       }))
     }
@@ -92,7 +93,8 @@ export default function Issuer() {
 
   const handleIssueToBlockchain = async () => {
     if (!credential.credentialId?.trim() || !credential.subject?.trim() || !credential.expiresAt?.trim()) {
-      setResult("❌ Please fill in all required fields:\n- Credential ID (e.g., visa-12345)\n- Subject (Algorand address)\n- Start On (date and time)\n- Ends On (date and time)")
+      setErrorMessage("❌ Please fill in all required fields:\n- Credential ID (e.g., visa-12345)\n- Subject (Algorand address)\n- Start On (date and time)\n- Ends On (date and time)")
+      setShowErrorModal(true)
       return
     }
 
@@ -108,6 +110,25 @@ export default function Issuer() {
       const schemaCode = getSchemaCode(credentialType)
       const expiresAtUnix = Math.floor(new Date(credential.expiresAt).getTime() / 1000)
       
+      // Check if ASA already exists (cached)
+      let asaId = getCachedASAId(credential.credentialId)
+      
+      // Create real ASA if not cached
+      if (!asaId) {
+        console.log('Creating real ASA for credential:', credential.credentialId)
+        const algodClient = getAlgodClient()
+        
+        asaId = await createCredentialASA(
+          credential.credentialId,
+          credential.claim,
+          ADMIN_ADDRESS,
+          algodClient
+        )
+        console.log('Created ASA with ID:', asaId)
+      } else {
+        console.log('Using cached ASA ID:', asaId)
+      }
+      
       const result = await mintNftAndIssueCredential({
         credentialId: credential.credentialId,
         subject: credential.subject,
@@ -116,34 +137,38 @@ export default function Issuer() {
         expiresAt: expiresAtUnix,
         cidPointer: "",
         claim: credential.claim,
-        validFrom: credential.validFrom
+        validFrom: credential.validFrom,
+        asaId: asaId // Pass the real ASA ID
       })
 
       // Create block explorer link (for TestNet/MainNet)
       const explorerBaseUrl = process.env.NEXT_PUBLIC_ALGOD_SERVER?.includes('testnet') 
         ? 'https://testnet.algoexplorer.io' 
         : 'https://algoexplorer.io'
-      const explorerLink = `${explorerBaseUrl}/asset/${result.nftAsaId}`
+      const explorerLink = `${explorerBaseUrl}/asset/${asaId}`
 
       // Set success data for modal
       setSuccessData({
-        nftAsaId: result.nftAsaId,
+        nftAsaId: asaId, // Use real ASA ID
         txId: result.txId,
         credentialId: credential.credentialId,
         subject: credential.subject,
         schemaCode,
         hash,
         expiresAt: credential.expiresAt,
-        explorerLink
+        explorerLink,
+        isRealASA: true, // Flag to indicate this is a real ASA
+        isSimulatedASA: asaId < 2000000 // Flag to indicate if this is simulated (IDs < 2M are simulated)
       })
       setShowSuccessModal(true)
     } catch (err: any) {
-      setResult(`⚠️ Failed to mint NFT and issue credential: ${err.message}
+      setErrorMessage(`⚠️ Failed to mint NFT and issue credential: ${err.message}
 
 Please check:
 • Student address is valid
 • All required fields are filled
 • Network connection is stable`)
+      setShowErrorModal(true)
     } finally {
       setIsIssuing(false)
     }
@@ -178,13 +203,12 @@ Please check:
           graduatedOn: "2024-06-15",
           gpa: "3.8"
         }
-      case 'EmploymentCredential':
+      case 'CertificationCredential':
         return {
-          company: "Tech Corp Inc.",
-          position: "Software Engineer",
-          department: "Engineering",
-          startDate: new Date().toISOString().split('T')[0],
-          salary: "$75,000"
+          certificationBody: "IELTS",
+          examType: "Academic",
+          score: "8.5",
+          validityPeriod: "2 years"
         }
     }
   }
@@ -200,12 +224,12 @@ Please check:
         ) : !userRole ? (
           <div style={{padding: "20px", backgroundColor: "#fff3cd", border: "1px solid #ffeaa7", borderRadius: "5px"}}>
             <h3>🔒 Access Restricted</h3>
-            <p>Please log in as an Institution, Authority, or Employer to issue credentials.</p>
+            <p>Please log in as an Institution, Authority, or Certifier to issue credentials.</p>
           </div>
         ) : userRole === 'Student' ? (
           <div style={{padding: "20px", backgroundColor: "#f8d7da", border: "1px solid #f5c6cb", borderRadius: "5px"}}>
             <h3>🚫 Access Denied</h3>
-            <p>Students cannot issue credentials. Please log in as an Institution, Authority, or Employer.</p>
+            <p>Students cannot issue credentials. Please log in as an Institution, Authority, or Certifier.</p>
           </div>
         ) : (
           <>
@@ -224,7 +248,7 @@ Please check:
                 fontSize: '28px',
                 fontWeight: '600'
               }}>
-                Issue {userRole === 'Institution' ? 'Education' : userRole === 'Authority' ? 'Visa' : userRole === 'Employer' ? 'Employment' : 'Credential'} Credential
+                Issue {userRole === 'Institution' ? 'Education' : userRole === 'Authority' ? 'Visa' : userRole === 'Certifier' ? 'Certification' : 'Credential'} Credential
               </h1>
       </div>
 
@@ -256,7 +280,7 @@ Please check:
           <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Issuer (Algorand Address):</label>
           <input 
             type="text" 
-            value={credential.issuer || "KYK6GIIY7JXHCX2VOQF2PFZJH4B5EL5KHCJ7CFSF7K7TZKONGWPUBA6OSM"}
+            value={credential.issuer || ADMIN_ADDRESS}
             onChange={(e) => setCredential({...credential, issuer: e.target.value})}
             style={{
             width: "100%", 
@@ -508,14 +532,14 @@ Please check:
             </div>
           )}
           
-          {credentialType === 'EmploymentCredential' && (
+          {credentialType === 'CertificationCredential' && (
             <div style={{marginTop: "10px"}}>
               <div style={{marginBottom: "10px"}}>
-                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Company:</label>
+                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Certification Body:</label>
                 <input 
                   type="text" 
-                  value={claimData.company || ""}
-                  onChange={(e) => updateClaimField('company', e.target.value)}
+                  value={claimData.certificationBody || ""}
+                  onChange={(e) => updateClaimField('certificationBody', e.target.value)}
                   style={{
             width: "100%", 
             padding: "12px", 
@@ -527,15 +551,15 @@ Please check:
             transition: "border-color 0.2s ease",
             boxSizing: "border-box"
           }}
-                  placeholder="e.g., Tech Corp Inc."
+                  placeholder="e.g., IELTS, AWS, Microsoft"
                 />
               </div>
               <div style={{marginBottom: "10px"}}>
-                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Position:</label>
+                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Exam Type:</label>
                 <input 
                   type="text" 
-                  value={claimData.position || ""}
-                  onChange={(e) => updateClaimField('position', e.target.value)}
+                  value={claimData.examType || ""}
+                  onChange={(e) => updateClaimField('examType', e.target.value)}
                   style={{
             width: "100%", 
             padding: "12px", 
@@ -547,15 +571,15 @@ Please check:
             transition: "border-color 0.2s ease",
             boxSizing: "border-box"
           }}
-                  placeholder="e.g., Software Engineer"
+                  placeholder="e.g., Academic, General Training, Professional"
                 />
               </div>
               <div style={{marginBottom: "10px"}}>
-                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Department:</label>
+                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Score:</label>
                 <input 
                   type="text" 
-                  value={claimData.department || ""}
-                  onChange={(e) => updateClaimField('department', e.target.value)}
+                  value={claimData.score || ""}
+                  onChange={(e) => updateClaimField('score', e.target.value)}
                   style={{
             width: "100%", 
             padding: "12px", 
@@ -567,34 +591,15 @@ Please check:
             transition: "border-color 0.2s ease",
             boxSizing: "border-box"
           }}
-                  placeholder="e.g., Engineering"
-                />
-              </div>
-              <div style={{marginBottom: "10px"}}>
-                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Start Date:</label>
-                <input 
-                  type="date" 
-                  value={claimData.startDate || ""}
-                  onChange={(e) => updateClaimField('startDate', e.target.value)}
-                  style={{
-            width: "100%", 
-            padding: "12px", 
-            backgroundColor: isDarkMode ? '#374151' : '#ffffff',
-            color: isDarkMode ? '#ffffff' : '#000000',
-            border: isDarkMode ? "1px solid #4b5563" : "1px solid #ddd",
-            borderRadius: "8px",
-            fontSize: "14px",
-            transition: "border-color 0.2s ease",
-            boxSizing: "border-box"
-          }}
+                  placeholder="e.g., 8.5, Pass, 95%"
                 />
               </div>
         <div style={{marginBottom: "10px"}}>
-                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Salary:</label>
+                <label style={{ display: 'block', textAlign: 'left', marginBottom: '5px', fontWeight: '500', color: isDarkMode ? '#ffffff' : '#374151' }}>Validity Period:</label>
                 <input 
                   type="text" 
-                  value={claimData.salary || ""}
-                  onChange={(e) => updateClaimField('salary', e.target.value)}
+                  value={claimData.validityPeriod || ""}
+                  onChange={(e) => updateClaimField('validityPeriod', e.target.value)}
                   style={{
             width: "100%", 
             padding: "12px", 
@@ -606,7 +611,7 @@ Please check:
             transition: "border-color 0.2s ease",
             boxSizing: "border-box"
           }}
-                  placeholder="e.g., $75,000"
+                  placeholder="e.g., 2 years, Lifetime, 3 years"
                 />
               </div>
             </div>
@@ -689,26 +694,13 @@ Please check:
               boxShadow: isIssuing ? "none" : "0 2px 4px rgba(139,92,246,0.3)"
             }}
           >
-            {isIssuing ? "🔄 Minting NFT & Issuing..." : `🎨 Mint NFT & Issue ${credentialType === 'EducationCredential' ? 'Education' : credentialType === 'VisaCredential' ? 'Visa' : 'Employment'} Credential`}
+            {isIssuing ? "🔄 Minting NFT & Issuing..." : `🎨 Mint NFT & Issue ${credentialType === 'EducationCredential' ? 'Education' : credentialType === 'VisaCredential' ? 'Visa' : 'Certification'} Credential`}
           </button>
         </div>
       </form>
               </div>
             </div>
       
-      {/* Error/Loading Messages */}
-      {result && !result.startsWith("✅") && (
-        <div style={{
-          marginTop: "20px", 
-          padding: "15px", 
-          backgroundColor: result.startsWith("🔄") ? "#fffbe6" : "#ffe6e6",
-          border: `1px solid ${result.startsWith("🔄") ? "#ffcc00" : "#ff0000"}`,
-          borderRadius: "5px",
-          color: isDarkMode ? "#ffffff" : "#000000"
-        }}>
-          <pre style={{whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0}}>{result}</pre>
-        </div>
-      )}
 
       {/* Success Modal */}
       {showSuccessModal && successData && (
@@ -775,6 +767,15 @@ Please check:
                 <p style={{ margin: '5px 0' }}><strong>Asset ID:</strong> {successData.nftAsaId}</p>
                 <p style={{ margin: '5px 0' }}><strong>Unit Name:</strong> CRD</p>
                 <p style={{ margin: '5px 0' }}><strong>Asset Name:</strong> CRD-{successData.credentialId}</p>
+                {successData.isSimulatedASA ? (
+                  <p style={{ margin: '5px 0', color: '#f59e0b', fontWeight: '600' }}>
+                    🔧 Simulated ASA (LocalNet Development)
+                  </p>
+                ) : (
+                  <p style={{ margin: '5px 0', color: '#10b981', fontWeight: '600' }}>
+                    ✅ Real ASA Created on Blockchain
+                  </p>
+                )}
               </div>
             </div>
 
@@ -796,6 +797,110 @@ Please check:
             </div>
 
 
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && errorMessage && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }} onClick={() => setShowErrorModal(false)}>
+          <div style={{
+            backgroundColor: isDarkMode ? '#1a0b2e' : '#ffffff',
+            color: isDarkMode ? '#ffffff' : '#000000',
+            padding: '30px',
+            borderRadius: '12px',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h2 style={{
+                margin: 0,
+                color: '#ef4444',
+                fontSize: '24px',
+                fontWeight: '600'
+              }}>
+                ❌ Error
+              </h2>
+              <button
+                onClick={() => setShowErrorModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: isDarkMode ? '#ffffff' : '#000000',
+                  padding: '5px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div style={{
+              backgroundColor: isDarkMode ? '#2d1b69' : '#f3f4f6',
+              padding: '15px',
+              borderRadius: '8px',
+              marginBottom: '15px'
+            }}>
+              <pre style={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                margin: 0,
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                lineHeight: '1.5'
+              }}>
+                {errorMessage}
+              </pre>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '15px'
+            }}>
+              <button
+                onClick={() => setShowErrorModal(false)}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#4b5563';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#6b7280';
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

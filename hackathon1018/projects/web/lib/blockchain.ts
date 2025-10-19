@@ -2,6 +2,7 @@ import algosdk from "algosdk"
 import { Credential } from "./cred"
 import { mintCredentialNft, createMetadataUrl, CredentialNFTMetadata } from "./nft"
 import { getAlgodClient, getAdminAccount, waitForConfirmation, getSuggestedParams, encodeAddress, numberToBytes8, APP_ID } from "./algorand"
+import { issueCredentialContract, revokeCredentialContract, getContractInfo } from "./smartcontract"
 
 // LocalNet configuration
 const ALGOD_TOKEN = ""
@@ -45,7 +46,7 @@ function saveCredentials(credentials: Map<string, any>) {
 const issuedCredentials = loadCredentials()
 
 // LocalNet admin account - use default LocalNet admin address
-const ADMIN_ADDRESS = "KYK6GIIY7JXHCX2VOQF2PFZJH4B5EL5KHCJ7CFSF7K7TZKONGWPUBA6OSM"
+const ADMIN_ADDRESS = "SACYCQTR3RVKZQOYYYPWEKS3AZZUOTHLRSSE4LGYEA5YPQRU26ZTIJIXBQ"
 
 // Debug: Log environment loading
 console.log('=== Blockchain Module Load ===')
@@ -65,63 +66,95 @@ export interface IssueCredentialParams {
   claim?: Record<string, unknown>
   validFrom?: string
   nftAsaId?: number
+  asaId?: number // Real ASA ID
 }
 
 export async function issueCredential(params: IssueCredentialParams): Promise<{ txId: string; nftAsaId?: number }> {
   try {
-    // Debug logging for environment variables
-    console.log('=== Environment Debug ===')
-    console.log('NEXT_PUBLIC_APP_ID:', process.env.NEXT_PUBLIC_APP_ID || 'NOT SET')
-    console.log('ADMIN_ADDRESS:', ADMIN_ADDRESS)
-    console.log('========================')
+    console.log('=== Smart Contract Integration ===')
+    const contractInfo = getContractInfo()
+    console.log('Contract Info:', contractInfo)
     
-    const appId = Number(process.env.NEXT_PUBLIC_APP_ID || 1005)
-    
-    // For LocalNet, we'll use a different approach - call the contract directly
-    // This simulates the credential issuing without requiring private key signing
-    console.log('Simulating credential issue for LocalNet...')
-    console.log('Credential ID:', params.credentialId)
-    console.log('Subject:', params.subject)
-    console.log('Schema Code:', params.schemaCode)
-    console.log('Hash:', params.hashHex)
-    console.log('Expires At:', params.expiresAt)
-    
-    // For LocalNet, simulate NFT minting first
-    let nftAsaId: number | undefined
-    if (params.nftAsaId) {
-      nftAsaId = params.nftAsaId
-      console.log('Using provided NFT ASA ID:', nftAsaId)
-    } else {
-      // Simulate NFT creation
-      nftAsaId = Math.floor(Math.random() * 1000000) + 1000000
-      console.log('Simulated NFT ASA ID:', nftAsaId)
+    // Try to use smart contract first
+    try {
+      console.log('Attempting smart contract credential issuance...')
+      
+      const contractResult = await issueCredentialContract(
+        params.credentialId,
+        params.subject,
+        params.schemaCode,
+        params.hashHex,
+        params.expiresAt,
+        params.asaId || 0, // Use provided ASA ID or 0
+        params.cidPointer || ''
+      )
+      
+      console.log('Smart contract result:', contractResult)
+      
+      // Return smart contract result
+      return {
+        txId: contractResult.txId,
+        nftAsaId: params.asaId
+      }
+      
+    } catch (contractError) {
+      console.warn('Smart contract failed, falling back to simulation:', contractError)
+      
+      // Fallback to simulation
+      console.log('=== Environment Debug ===')
+      console.log('NEXT_PUBLIC_APP_ID:', process.env.NEXT_PUBLIC_APP_ID || 'NOT SET')
+      console.log('ADMIN_ADDRESS:', ADMIN_ADDRESS)
+      console.log('========================')
+      
+      const appId = Number(process.env.NEXT_PUBLIC_APP_ID || 1013)
+      
+      // For LocalNet, we'll use a different approach - call the contract directly
+      // This simulates the credential issuing without requiring private key signing
+      console.log('Simulating credential issue for LocalNet...')
+      console.log('Credential ID:', params.credentialId)
+      console.log('Subject:', params.subject)
+      console.log('Schema Code:', params.schemaCode)
+      console.log('Hash:', params.hashHex)
+      console.log('Expires At:', params.expiresAt)
+      
+      // For LocalNet, simulate NFT minting first
+      let nftAsaId: number | undefined
+      if (params.nftAsaId) {
+        nftAsaId = params.nftAsaId
+        console.log('Using provided NFT ASA ID:', nftAsaId)
+      } else {
+        // Simulate NFT creation
+        nftAsaId = Math.floor(Math.random() * 1000000) + 1000000
+        console.log('Simulated NFT ASA ID:', nftAsaId)
+      }
+      
+      // Store credential data for verification
+      const credentialData = {
+        credentialId: params.credentialId,
+        subject: params.subject,
+        schemaCode: params.schemaCode,
+        hashHex: params.hashHex,
+        expiresAt: params.expiresAt,
+        issuedAt: Math.floor(Date.now() / 1000),
+        revoked: false,
+        cidPointer: params.cidPointer || "",
+        claim: params.claim || {},
+        validFrom: params.validFrom || null,
+        nftAsaId: nftAsaId
+      }
+      
+      // Store by credential ID for verification
+      issuedCredentials.set(params.credentialId, credentialData)
+      saveCredentials(issuedCredentials)
+      
+      // Return a mock transaction ID for LocalNet
+      const mockTxId = `LOCALNET_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      console.log('✅ Credential issued successfully (LocalNet simulation)')
+      console.log('Stored credential:', credentialData)
+      return { txId: mockTxId, nftAsaId }
     }
     
-    // Store credential data for verification
-    const credentialData = {
-      credentialId: params.credentialId,
-      subject: params.subject,
-      schemaCode: params.schemaCode,
-      hashHex: params.hashHex,
-      expiresAt: params.expiresAt,
-      issuedAt: Math.floor(Date.now() / 1000),
-      revoked: false,
-      cidPointer: params.cidPointer || "",
-      claim: params.claim || {},
-      validFrom: params.validFrom || null,
-      nftAsaId: nftAsaId
-    }
-    
-    // Store by credential ID for verification
-    issuedCredentials.set(params.credentialId, credentialData)
-    saveCredentials(issuedCredentials)
-    
-    // Return a mock transaction ID for LocalNet
-    const mockTxId = `LOCALNET_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
-    console.log('✅ Credential issued successfully (LocalNet simulation)')
-    console.log('Stored credential:', credentialData)
-    return { txId: mockTxId, nftAsaId }
   } catch (error) {
     console.error("Error issuing credential:", error)
     throw new Error(`Failed to issue credential: ${error}`)
@@ -141,9 +174,9 @@ export async function mintNftAndIssueCredential(
   try {
     console.log('🎨 Starting NFT minting and credential issuance...')
     
-    // Check if we're in LocalNet mode
-    if (!process.env.NEXT_PUBLIC_APP_ID || process.env.NEXT_PUBLIC_APP_ID === '0' || !process.env.NEXT_PUBLIC_ADMIN_MNEMONIC || process.env.NEXT_PUBLIC_ADMIN_MNEMONIC === '') {
-      console.log('LocalNet mode - simulating NFT minting and credential issuance...')
+    // Check if we have a real app ID (not simulation mode)
+    if (!process.env.NEXT_PUBLIC_APP_ID || process.env.NEXT_PUBLIC_APP_ID === '0') {
+      console.log('No app ID configured - simulating NFT minting and credential issuance...')
       
       // Simulate NFT minting
       const nftAsaId = Math.floor(Math.random() * 1000000) + 1000000
@@ -193,31 +226,43 @@ export async function mintNftAndIssueCredential(
 
 export async function revokeCredential(credentialId: string): Promise<string> {
   try {
-    console.log('Simulating credential revocation for LocalNet...')
-    console.log('Credential ID:', credentialId)
+    console.log('Revoking credential:', credentialId)
     
-    // Check if credential exists
-    const credential = issuedCredentials.get(credentialId)
-    if (!credential) {
-      throw new Error('Credential not found')
+    // Check if we have a real app ID (not simulation mode)
+    if (!process.env.NEXT_PUBLIC_APP_ID || process.env.NEXT_PUBLIC_APP_ID === '0') {
+      console.log('No app ID configured - simulating credential revocation...')
+      
+      // Check if credential exists
+      const credential = issuedCredentials.get(credentialId)
+      if (!credential) {
+        throw new Error('Credential not found')
+      }
+      
+      // Mark credential as revoked
+      const updatedCredential = {
+        ...credential,
+        revoked: true,
+        revokedAt: Date.now()
+      }
+      
+      issuedCredentials.set(credentialId, updatedCredential)
+      saveCredentials(issuedCredentials) // Persist to localStorage
+      
+      // Return a mock transaction ID for LocalNet
+      const mockTxId = `LOCALNET_REVOKE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
+      console.log('✅ Credential revoked successfully (simulated)')
+      return mockTxId
     }
+
+    // Real blockchain implementation
+    console.log('🔗 Real blockchain mode - revoking credential...')
     
-    // Mark credential as revoked
-    const updatedCredential = {
-      ...credential,
-      revoked: true,
-      revokedAt: Date.now()
-    }
+    const result = await revokeCredentialContract(credentialId)
+    console.log('✅ Credential revoked successfully!')
     
-    issuedCredentials.set(credentialId, updatedCredential)
-    saveCredentials(issuedCredentials) // Persist to localStorage
+    return result.txId
     
-    // Return a mock transaction ID for LocalNet
-    const mockTxId = `LOCALNET_REVOKE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
-    console.log('✅ Credential revoked successfully (LocalNet simulation)')
-    console.log('Updated credential:', updatedCredential)
-    return mockTxId
   } catch (error) {
     console.error("Error revoking credential:", error)
     throw new Error(`Failed to revoke credential: ${error}`)
@@ -227,7 +272,7 @@ export async function revokeCredential(credentialId: string): Promise<string> {
 export async function checkAccountBalance(address: string): Promise<number> {
   try {
     const accountInfo = await algodClient.accountInformation(address).do()
-    return accountInfo.amount
+    return Number(accountInfo.amount)
   } catch (error) {
     console.error("Error checking account balance:", error)
     return 0
@@ -248,7 +293,7 @@ export async function searchCredentialsBySubjectLocalNet(subjectAddress: string)
       credentials.push({
         ...credentialData,
         issuer: ADMIN_ADDRESS,
-        credentialType: credentialData.schemaCode === 1 ? 'VisaCredential' : credentialData.schemaCode === 2 ? 'EducationCredential' : 'EmploymentCredential'
+        credentialType: credentialData.schemaCode === 1 ? 'VisaCredential' : credentialData.schemaCode === 2 ? 'EducationCredential' : 'CertificationCredential'
       })
     }
   }
@@ -266,7 +311,7 @@ export async function verifyCredentialLocalNet(credentialId: string): Promise<an
     return {
       ...credential,
       issuer: ADMIN_ADDRESS,
-      credentialType: credential.schemaCode === 1 ? 'VisaCredential' : credential.schemaCode === 2 ? 'EducationCredential' : 'EmploymentCredential'
+      credentialType: credential.schemaCode === 1 ? 'VisaCredential' : credential.schemaCode === 2 ? 'EducationCredential' : 'CertificationCredential'
     }
   }
   

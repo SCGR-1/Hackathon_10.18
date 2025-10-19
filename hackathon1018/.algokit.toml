@@ -6,11 +6,7 @@ type = 'workspace'
 projects_root_path = 'projects'
 
 [project.run]
-build = ['hackathon1018-contracts', 'hackathon1018-frontend']
-lint = "poetry -C projects/cred_contracts run ruff . && poetry -C projects/cred_contracts run black --check ."
-test = "poetry -C projects/cred_contracts run pytest -q"
-compile_contracts = "poetry -C projects/cred_contracts run python -m projects.cred_contracts.src.deploy --compile"
-
-[project.deploy]
-command = "poetry -C projects/cred_contracts run python -m projects.cred_contracts.src.deploy --deploy"
-environment_secrets = ["DEPLOYER_MNEMONIC"]
+build = ['cred_contracts', 'web']
+lint = ['cred_contracts', 'web']
+test = ['cred_contracts']
+deploy_localnet = ['cred_contracts']

@@ -1,6 +1,6 @@
 import React from 'react'
 import { UserRole } from '../contexts/AuthContext'
-import { GraduationCap, Building, Shield } from 'lucide-react'
+import { GraduationCap, Award, Shield } from 'lucide-react'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -93,11 +93,11 @@ export default function LoginModal({ isOpen, onClose, onLogin, isDarkMode }: Log
             }}
           >
             <GraduationCap size={20} style={{ marginRight: '8px' }} />
-            Student/Employee
+            Student
           </button>
           
           <button
-            onClick={() => onLogin('Employer')}
+            onClick={() => onLogin('Certifier')}
             style={{
               padding: '12px 20px',
               backgroundColor: '#f59e0b',
@@ -113,8 +113,8 @@ export default function LoginModal({ isOpen, onClose, onLogin, isDarkMode }: Log
               gap: '8px'
             }}
           >
-            <Building size={20} style={{ marginRight: '8px' }} />
-            Employer
+            <Award size={20} style={{ marginRight: '8px' }} />
+            Certifier
           </button>
           
           <button

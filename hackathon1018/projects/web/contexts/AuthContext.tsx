@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/router'
 
-export type UserRole = 'Institution' | 'Authority' | 'Employer' | 'Student' | null
+export type UserRole = 'Institution' | 'Authority' | 'Certifier' | 'Student' | null
 
 interface AuthContextType {
   userRole: UserRole
