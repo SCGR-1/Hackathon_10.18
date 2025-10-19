@@ -39,18 +39,18 @@ def app():
             Assert(schema_code <= EMPLOYMENT_SCHEMA),
             Assert(Len(cid_pointer) <= Int(32)),  # CID pointer max 32 bytes
             Assert(Len(nft_asa_id) == Int(8)),  # NFT ASA ID must be exactly 8 bytes
-            Pop(BoxCreate(cred_id, Int(32 + 32 + 1 + 32 + 8 + 8 + 1 + 32 + 8))),  # Total: 154 bytes
+            Pop(BoxCreate(cred_id, Int(32 + 32 + 8 + 32 + 8 + 8 + 1 + 32 + 8))),  # Total: 161 bytes
             BoxPut(
                 cred_id,
                 Concat(
                     Txn.sender(),  # issuer_addr (32)
                     subject,       # subject_addr (32)
-                    Itob(schema_code),  # schema_code (1 byte, padded to 1)
+                    Itob(schema_code),  # schema_code (8 bytes for integer)
                     cred_hash,     # cred_hash (32)
                     Itob(Global.latest_timestamp()),  # issued_at (8)
                     Itob(expires_at),  # expires_at (8)
                     Bytes("\x00"),  # revoked (1)
-                    Concat(cid_pointer, Bytes("\x00" * 32)),  # cid_pointer (32, padded)
+                    cid_pointer,   # cid_pointer (32 bytes, caller ensures this)
                     nft_asa_id     # nft_asa_id (8)
                 ),
             ),

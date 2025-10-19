@@ -1,255 +1,246 @@
-# Multi-Credential Verification System
+# EduChain - Blockchain Credential Verification Platform
 
-A blockchain-based credential verification system using Algorand's blockchain for visa, education, and employment status verification. Implements the recommended pattern of keeping heavy data off-chain while anchoring each credential on-chain for privacy + verifiability + simple revocation.
+EduChain is a decentralized credential verification system built on Algorand that issues tamper-proof credentials and commemorative NFTs. Whether you're an institution issuing diplomas, a government authority managing visas, or a certification body validating professional credentials, EduChain provides a secure, immutable way to verify achievements.
 
-## Project Structure
+## 🌟 What Makes EduChain Special
 
-```
-hackathon1018/
-├── projects/
-│   ├── cred_contracts/          # PyTeal smart contracts
-│   │   ├── src/
-│   │   │   ├── app.py         # Main smart contract
-│   │   │   ├── deploy.py      # Deployment script
-│   │   │   └── util.py        # Utility functions
-│   │   ├── tests/
-│   │   │   └── test_app.py    # Unit tests
-│   │   ├── artifacts/         # Compiled contracts
-│   │   └── pyproject.toml     # Python dependencies
-│   └── web/                   # Next.js frontend
-│       ├── lib/
-│       │   ├── cred.ts        # Credential utilities
-│       │   └── algorand.ts    # Algorand client
-│       ├── pages/
-│       │   ├── index.tsx      # Home page
-│       │   ├── issuer.tsx     # Issue credentials
-│       │   └── verify.tsx     # Verify credentials
-│       └── package.json       # Node dependencies
-└── .algokit.toml             # Workspace configuration
-```
+- **Real Blockchain Integration**: Built on Algorand with actual smart contracts and NFT minting
+- **Multiple Credential Types**: Education, Visa, and Certification credentials
+- **Commemorative NFTs**: Each credential comes with a unique digital collectible
+- **Instant Verification**: Real-time credential validation on the blockchain
+- **LocalNet Development**: Full development environment with Algorand LocalNet
 
-## Features
+## 🏗️ Architecture Overview
 
-- **Multi-Credential Support**: Visa, Education, and Employment credentials with schema codes
-- **Smart Contract**: PyTeal-based credential registry with issue/revoke functionality
-- **Web Interface**: Next.js application for issuing and verifying credentials
-- **Off-Chain Storage**: Full credential data stored off-chain (IPFS/DB) with on-chain anchors
-- **Privacy-First**: Only hashes and minimal metadata stored on-chain
-- **Tamper Detection**: Cryptographic verification of credential integrity
-- **Expiration Support**: Time-based credential expiration
-- **Revocation**: Ability to revoke issued credentials
-- **IPFS Integration**: Optional IPFS CID pointers for off-chain data retrieval
+### Smart Contract Layer
+- **Algorand Smart Contract (ASC)**: Handles credential issuance, revocation, and verification
+- **Box Storage**: Stores credential metadata securely on-chain
+- **Application Account**: Funded account for smart contract operations
 
-## Setup Instructions
+### Frontend Layer
+- **Next.js + TypeScript**: Modern React-based web application
+- **AlgoKit Integration**: Simplified Algorand blockchain interactions
+- **Role-Based Access**: Student, Institution, Authority, and Certifier roles
+
+### Blockchain Integration
+- **Real NFTs**: Actual Algorand Standard Assets (ASAs) minted for each credential
+- **LocalNet Support**: Complete development environment with funding automation
+- **Environment Flexibility**: Works with LocalNet, TestNet, and MainNet
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-1. **Python 3.12+** with Poetry
-2. **Node.js 18+** with npm
-3. **AlgoKit CLI** (`pipx install algokit`)
-4. **TestNet Account** with ALGO tokens
+- **Node.js** (v18 or higher)
+- **Python** (v3.8 or higher)
+- **Algorand LocalNet** (via AlgoKit)
+- **Git**
 
-### 1. Install Dependencies
+### 1. Clone and Setup
 
 ```bash
-# Install smart contract dependencies
-cd hackathon1018/projects/cred_contracts
-poetry install
+git clone <repository-url>
+cd hackathon1018
+```
 
-# Install web app dependencies
+### 2. Backend Setup (Smart Contracts)
+
+```bash
+cd projects/cred_contracts
+pip install -r requirements.txt
+```
+
+### 3. Frontend Setup
+
+```bash
 cd ../web
 npm install
 ```
 
-### 2. Set Environment Variables
+### 4. Environment Configuration
 
-```bash
-# Set your TestNet account mnemonic
-export DEPLOYER_MNEMONIC="your 25-word mnemonic phrase"
+Create `.env.local` in the `web` directory:
 
-# Set the deployed app ID (after deployment)
-echo "NEXT_PUBLIC_APP_ID=<app_id>" > hackathon1018/projects/web/.env.local
+```env
+# Algorand Configuration
+NEXT_PUBLIC_ALGOD_SERVER=http://localhost:4001
+NEXT_PUBLIC_ALGOD_TOKEN=
+NEXT_PUBLIC_INDEXER_SERVER=http://localhost:8980
+NEXT_PUBLIC_INDEXER_TOKEN=
+
+# Smart Contract Configuration
+NEXT_PUBLIC_APP_ID=1013
+NEXT_PUBLIC_ADMIN_ADDRESS=SACYCQTR3RVKZQOYYYPWEKS3AZZUOTHLRSSE4LGYEA5YPQRU26ZTIJIXBQ
+
+# Optional: For production deployments
+NEXT_PUBLIC_ADMIN_MNEMONIC=your_mnemonic_here
 ```
 
-### 3. Deploy Smart Contract
+## 📋 Detailed Deployment Manual
+
+### Step 1: Start Algorand LocalNet
 
 ```bash
-# Deploy to TestNet
-cd hackathon1018
-algokit project deploy testnet
+# Install AlgoKit if not already installed
+pip install algokit
+
+# Start LocalNet
+algokit localnet start
 ```
 
-### 4. Run the Application
+Verify LocalNet is running:
+- Algod: http://localhost:4001
+- Indexer: http://localhost:8980
+- KMD: http://localhost:4002
+
+### Step 2: Deploy Smart Contract
 
 ```bash
-# Start the web application
-cd hackathon1018/projects/web
+cd projects/cred_contracts/src
+
+# Deploy the smart contract
+python deploy_localnet.py
+
+# Fund the application account (required for box storage)
+python deploy_localnet.py --fund
+```
+
+**Important**: The `--fund` flag is crucial as it funds the application account with 200,000 microALGOs needed for box storage operations.
+
+### Step 3: Configure Frontend
+
+1. **Update App ID**: After deployment, update `NEXT_PUBLIC_APP_ID` in `.env.local` with the deployed contract's App ID.
+
+2. **Verify Admin Address**: Ensure `NEXT_PUBLIC_ADMIN_ADDRESS` matches your LocalNet admin address.
+
+### Step 4: Start Development Server
+
+```bash
+cd projects/web
 npm run dev
 ```
 
-## Usage
+The application will be available at http://localhost:3000
 
-### Issuing Credentials
+### Step 5: Test the System
 
-1. Navigate to `/issuer` page
-2. Select credential type (Visa or Education)
-3. Fill in credential details:
-   - Credential ID (unique identifier)
-   - Issuer (Algorand address)
-   - Subject (Algorand address)
-   - Expiration date
-   - Claim data (JSON) - use templates for each type
-4. Click "🚀 Issue to Blockchain" to automatically issue the credential
+1. **Login as Certifier**: Use the Award icon to login as a Certifier
+2. **Issue Certification**: Create a certification credential with fields like:
+   - Certification Body: "AWS"
+   - Exam Type: "Solutions Architect"
+   - Score: "95%"
+   - Validity Period: "3 years"
+3. **Verify Credential**: Use the verify page to check the issued credential
+4. **Check NFT**: View the commemorative NFT in the wallet section
 
-The web interface handles all the complexity of generating hashes, schema codes, and blockchain transactions automatically.
+## 🔧 Technical Details
 
-### Verifying Credentials
+### Smart Contract Features
 
-1. Navigate to `/verify` page
-2. Paste the credential JSON
-3. Click "Verify" to check against blockchain
+- **Credential Issuance**: Store credential metadata in box storage
+- **Revocation Support**: Mark credentials as revoked
+- **Expiration Handling**: Automatic expiration checking
+- **NFT Integration**: Link credentials to minted NFTs
 
-### Example Credentials
+### Frontend Architecture
 
-**Visa Credential:**
-```json
-{
-  "type": "VisaCredential",
-  "credentialId": "visa-12345",
-  "issuer": "ALGORAND_ISSUER_ADDR",
-  "subject": "ALGORAND_SUBJECT_ADDR",
-  "claim": {
-    "visaType": "Work Visa",
-    "country": "USA",
-    "visaNumber": "V123456789",
-    "issuedBy": "US Embassy"
-  },
-  "issuedAt": "2024-01-01T00:00:00Z",
-  "expiresAt": "2026-01-01T00:00:00Z",
-  "cid": "QmHash..."
-}
-```
+- **Authentication Context**: Role-based access control
+- **Blockchain Integration**: Real smart contract calls via AlgoKit
+- **NFT Minting**: Automatic NFT creation for each credential
+- **Responsive Design**: Dark/light mode support
 
-**Education Credential:**
-```json
-{
-  "type": "EducationCredential",
-  "credentialId": "edu-67890",
-  "issuer": "ALGORAND_ISSUER_ADDR",
-  "subject": "ALGORAND_SUBJECT_ADDR",
-  "claim": {
-    "institution": "University of Example",
-    "program": "Bachelor of Computer Science",
-    "degree": "BSc",
-    "graduatedOn": "2024-06-15",
-    "gpa": "3.8"
-  },
-  "issuedAt": "2024-01-01T00:00:00Z",
-  "expiresAt": "2028-01-01T00:00:00Z"
-}
-```
+### Credential Types
 
-**Employment Credential:**
-```json
-{
-  "type": "EmploymentCredential",
-  "credentialId": "emp-11111",
-  "issuer": "ALGORAND_ISSUER_ADDR",
-  "subject": "ALGORAND_SUBJECT_ADDR",
-  "claim": {
-    "position": "Software Engineer",
-    "department": "Engineering",
-    "company": "TechCorp Inc",
-    "salary": "120000",
-    "startDate": "2024-01-01"
-  },
-  "issuedAt": "2024-01-01T00:00:00Z",
-  "expiresAt": "2025-01-01T00:00:00Z"
-}
-```
+1. **Education Credential** (Schema Code: 1)
+   - Institution, Degree, Field of Study, GPA
 
-## Commands
+2. **Visa Credential** (Schema Code: 2)
+   - Country, Visa Type, Purpose, Duration
+
+3. **Certification Credential** (Schema Code: 3)
+   - Certification Body, Exam Type, Score, Validity Period
+
+## 🛠️ Development Workflow
+
+### Making Changes
+
+1. **Smart Contract Changes**: Modify `projects/cred_contracts/src/app.py`
+2. **Frontend Changes**: Update components in `projects/web/components/`
+3. **Redeploy**: Run `python deploy_localnet.py` after contract changes
+
+### Testing
 
 ```bash
-# Build everything
-algokit project run build
+# Run smart contract tests
+cd projects/cred_contracts
+python -m pytest tests/
 
-# Lint code
-algokit project run lint
-
-# Run tests
-algokit project run test
-
-# Compile contracts
-algokit project run compile_contracts
-
-# Deploy to TestNet
-algokit project deploy testnet
-
-# Issue demo credential
-algokit project run issue_demo -- demo-1234 <SUBJECT_ADDR> <HASH_HEX> <EXPIRES_UNIX>
-
-# Revoke credential
-algokit project run revoke_demo -- demo-1234
+# Run frontend tests
+cd ../web
+npm test
 ```
 
-## Smart Contract Details
+### Debugging
 
-The multi-credential registry smart contract provides:
+- **Smart Contract Logs**: Check LocalNet logs for transaction details
+- **Frontend Console**: Browser dev tools for frontend debugging
+- **Blockchain Explorer**: Use Algorand Explorer for transaction verification
 
-- **Issue**: Store credential hash with schema-specific metadata
-- **Revoke**: Mark credential as revoked
-- **Box Storage**: Each credential stored in a separate box (146 bytes)
-- **Schema Support**: Visa (1), Education (2), Employment (3)
-- **Admin Control**: Only admin can issue/revoke credentials
-- **IPFS Integration**: Optional CID pointers for off-chain data
-- **Immutable**: Once issued, credentials cannot be modified
+## 🚨 Troubleshooting
 
-### On-Chain Storage (per credential):
-- issuer_addr (32 bytes)
-- subject_addr (32 bytes) 
-- schema_code (1 byte)
-- cred_hash (32 bytes)
-- issued_at (8 bytes)
-- expires_at (8 bytes)
-- revoked (1 byte)
-- cid_pointer (32 bytes)
+### Common Issues
 
-## Security Features
+1. **"Box Storage Account Problem"**
+   - Solution: Run `python deploy_localnet.py --fund`
 
-- **Cryptographic Hashing**: SHA-256 hashing prevents tampering
-- **Blockchain Immutability**: Credential registry cannot be altered
-- **Expiration Checking**: Automatic expiration validation
-- **Revocation Support**: Ability to revoke compromised credentials
-- **Address Verification**: Subject address validation
+2. **"Invalid admin mnemonic"**
+   - Solution: Ensure LocalNet is running and admin address is correct
 
-## Architecture Benefits
+3. **"Overspend error"**
+   - Solution: Fund accounts using AlgoKit's `ensureFunded` function
 
-### Privacy + Verifiability
-- **Off-Chain Storage**: Full credential data (names, IDs, details) stored off-chain
-- **On-Chain Anchors**: Only cryptographic hashes and minimal metadata on-chain
-- **Tamper Detection**: Any modification to off-chain data breaks hash verification
-- **Selective Disclosure**: Users control what information to share
+4. **"Asset name too big"**
+   - Solution: Credential IDs are automatically truncated to fit 32-character limit
 
-### Scalability
-- **Per-Credential Anchors**: Each credential is independently verifiable and revocable
-- **Schema Flexibility**: Easy to add new credential types with new schema codes
-- **IPFS Integration**: Decentralized off-chain storage with CID pointers
-- **Efficient Storage**: Only 146 bytes per credential on-chain
+### Environment Issues
 
-### Security
-- **Immutable Registry**: Blockchain ensures credential registry cannot be altered
-- **Cryptographic Verification**: SHA-256 hashing prevents credential tampering
-- **Revocation Support**: Instant revocation capability for compromised credentials
-- **Expiration Control**: Time-based credential expiration
+- **LocalNet Not Running**: Ensure `algokit localnet start` is executed
+- **Port Conflicts**: Check that ports 4001, 8980, and 4002 are available
+- **Python Dependencies**: Run `pip install -r requirements.txt`
 
-## Next Steps
+## 📚 API Reference
 
-1. **IPFS Integration**: Implement actual IPFS storage for off-chain data
-2. **Batch Operations**: Support for issuing multiple credentials
-3. **Advanced Schemas**: Add more credential types (certifications, licenses, etc.)
-4. **API Endpoints**: REST API for third-party integration
-5. **Mobile App**: React Native app for credential management
-6. **MainNet Deployment**: Production deployment on Algorand MainNet
-7. **Audit Trail**: Complete transaction history and analytics
-8. **Multi-Language**: Support for multiple languages and regions
+### Smart Contract Methods
+
+- `issue(credentialId, subject, schemaCode, hash, expiresAt, nftAsaId, cidPointer)`
+- `revoke(credentialId)`
+- `getCredential(credentialId)`
+
+### Frontend Functions
+
+- `mintNftAndIssueCredential()`: Mint NFT and issue credential
+- `verifyCredentialLocalNet()`: Verify credential authenticity
+- `revokeCredential()`: Revoke a credential
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Built on Algorand blockchain
+- Powered by AlgoKit development tools
+- Uses Next.js and React for the frontend
+- Lucide React for beautiful icons
+
+---
+
+**Ready to revolutionize credential verification? Start with EduChain!** 🚀

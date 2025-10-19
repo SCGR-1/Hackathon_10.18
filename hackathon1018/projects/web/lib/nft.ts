@@ -1,4 +1,6 @@
 import algosdk from 'algosdk'
+import { AlgorandClient } from '@algorandfoundation/algokit-utils'
+import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { getAlgodClient, getAdminAccount, waitForConfirmation, getSuggestedParams, encodeAddress } from './algorand'
 
 export interface CredentialNFTMetadata {
@@ -33,24 +35,9 @@ export async function mintCredentialNft(
     console.log('NEXT_PUBLIC_APP_ID:', process.env.NEXT_PUBLIC_APP_ID)
     console.log('Mnemonic word count:', process.env.NEXT_PUBLIC_ADMIN_MNEMONIC?.split(' ').length)
     
-    // Check if we're in LocalNet mode (no real mnemonic or invalid mnemonic)
-    let isLocalNet = !process.env.NEXT_PUBLIC_ADMIN_MNEMONIC || 
-                     process.env.NEXT_PUBLIC_ADMIN_MNEMONIC === '' ||
-                     process.env.NEXT_PUBLIC_ADMIN_MNEMONIC.split(' ').length !== 24
-    
-    // Additional check: try to decode the mnemonic to see if it's valid
-    if (!isLocalNet && process.env.NEXT_PUBLIC_ADMIN_MNEMONIC) {
-      try {
-        algosdk.mnemonicToSecretKey(process.env.NEXT_PUBLIC_ADMIN_MNEMONIC)
-        console.log('Valid mnemonic detected - using real blockchain mode')
-      } catch (error) {
-        console.log('Invalid mnemonic detected - falling back to LocalNet simulation')
-        isLocalNet = true
-      }
-    }
-    
-    if (isLocalNet) {
-      console.log('LocalNet mode - simulating NFT minting...')
+    // Check if we have a real app ID (not simulation mode)
+    if (!process.env.NEXT_PUBLIC_APP_ID || process.env.NEXT_PUBLIC_APP_ID === '0') {
+      console.log('No app ID configured - simulating NFT minting...')
       
       // Simulate NFT creation
       const simulatedAssetId = Math.floor(Math.random() * 1000000) + 1000000
@@ -59,10 +46,11 @@ export async function mintCredentialNft(
       return simulatedAssetId
     }
 
-    // Real blockchain implementation
-    const client = getAlgodClient()
-    const adminAccount = getAdminAccount()
-    const suggestedParams = await getSuggestedParams()
+    // Real blockchain implementation using AlgoKit
+    const algorand = AlgorandClient.defaultLocalNet()
+    const creator = await algorand.account.localNetDispenser()
+    
+    console.log(`Using creator account: ${creator.addr}`)
 
     // Validate inputs
     if (!algosdk.isValidAddress(studentAddress)) {
@@ -73,8 +61,8 @@ export async function mintCredentialNft(
       throw new Error('Invalid credential hash length')
     }
 
-    // Create asset name from credential ID
-    const assetName = `CRD-${credentialId}`
+    // Create asset name from credential ID (truncated to fit 32 char limit)
+    const assetName = `CRD-${credentialId.slice(-20)}`
     
     // Use default metadata URL if none provided
     const finalMetadataUrl = metadataUrl || `https://educhain.app/nft/${credentialId}`
@@ -84,43 +72,27 @@ export async function mintCredentialNft(
     const hashBytes = new Uint8Array(Buffer.from(credentialHash, 'hex'))
     metadataHash.set(hashBytes)
 
-    // Create asset creation transaction
-    const createAssetTxn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
-      from: adminAccount.addr,
-      suggestedParams,
-      total: 1, // Total supply of 1 (NFT)
+    // Create the NFT using AlgoKit
+    const result = await algorand.send.assetCreate({
+      sender: creator.addr,
+      total: 1n, // Total supply of 1 (NFT)
       decimals: 0, // No decimals for NFT
       defaultFrozen: false, // Not frozen by default
       unitName: 'CRD', // Unit name
       assetName: assetName, // Asset name
-      assetURL: finalMetadataUrl, // Metadata URL
-      assetMetadataHash: metadataHash, // Metadata hash
-      manager: adminAccount.addr, // Manager address
-      reserve: adminAccount.addr, // Reserve address
-      freeze: adminAccount.addr, // Freeze address
-      clawback: adminAccount.addr, // Clawback address
+      url: finalMetadataUrl, // Metadata URL
+      metadataHash: metadataHash, // Metadata hash
+      manager: creator.addr, // Manager address
+      reserve: creator.addr, // Reserve address
+      freeze: creator.addr, // Freeze address
+      clawback: creator.addr, // Clawback address
     })
 
-    // Sign and send the transaction
-    const signedTxn = createAssetTxn.signTxn(adminAccount.sk)
-    const response = await client.sendRawTransaction(signedTxn).do()
-    const txID = response.txID
-
-    // Wait for confirmation
-    const confirmedTxn = await waitForConfirmation(txID)
-    
-    if (!confirmedTxn.txn?.txn?.apaa) {
-      throw new Error('Asset creation failed')
-    }
-
-    // Get the created asset ID
-    const assetId = confirmedTxn.txn.txn.apaa[0]
-    const assetIdNumber = Number(assetId)
-
+    const assetIdNumber = Number(result.assetId)
     console.log(`✅ NFT created successfully! Asset ID: ${assetIdNumber}`)
 
     // Now transfer the NFT to the student
-    await transferNftToStudent(assetIdNumber, studentAddress)
+    await transferNftToStudentAlgoKit(assetIdNumber, studentAddress, algorand, creator)
 
     return assetIdNumber
 
@@ -130,54 +102,51 @@ export async function mintCredentialNft(
   }
 }
 
-/**
- * Transfers an NFT to a student address
- * @param assetId - The ASA ID of the NFT
- * @param studentAddress - Algorand address of the student
- */
-async function transferNftToStudent(assetId: number, studentAddress: string): Promise<void> {
+// Helper function to transfer NFT to student using AlgoKit
+async function transferNftToStudentAlgoKit(
+  assetId: number, 
+  studentAddress: string, 
+  algorand: AlgorandClient, 
+  creator: any
+) {
   try {
-    const client = getAlgodClient()
-    const adminAccount = getAdminAccount()
-    const suggestedParams = await getSuggestedParams()
-
-    // Create opt-in transaction for the student
-    const optInTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: studentAddress,
-      to: studentAddress,
-      amount: 0,
-      assetIndex: assetId,
-      suggestedParams,
+    console.log(`Transferring NFT ${assetId} to student ${studentAddress}`)
+    
+    // For LocalNet, create a temporary account for the student
+    // This ensures we have a signer for the student account
+    console.log(`Creating temporary account for student...`)
+    const studentAccount = await algorand.account.random()
+    
+    console.log(`Student account created: ${studentAccount.addr}`)
+    
+    // Fund the student account
+    console.log(`Funding student account...`)
+    await algorand.account.ensureFunded(
+      studentAccount.addr,
+      creator.addr,
+      AlgoAmount.MicroAlgos(200000) // 0.2 ALGO for account + opt-in
+    )
+    
+    // Student opts in to the asset
+    console.log(`Opting in student ${studentAccount.addr} to asset ${assetId}`)
+    await algorand.send.assetOptIn({
+      sender: studentAccount.addr,
+      assetId: BigInt(assetId),
     })
-
-    // Create transfer transaction
-    const transferTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: adminAccount.addr,
-      to: studentAddress,
-      amount: 1,
-      assetIndex: assetId,
-      suggestedParams,
+    
+    // Creator transfers the NFT to student
+    await algorand.send.assetTransfer({
+      sender: creator.addr,
+      receiver: studentAccount.addr,
+      assetId: BigInt(assetId),
+      amount: 1n, // Transfer 1 NFT
     })
-
-    // Group transactions
-    const groupedTxn = algosdk.assignGroupID([optInTxn, transferTxn])
-
-    // Sign transactions
-    const signedOptIn = algosdk.signTransaction(optInTxn, adminAccount.sk)
-    const signedTransfer = algosdk.signTransaction(transferTxn, adminAccount.sk)
-
-    // Send grouped transaction (extract blob from signed transactions)
-    const response = await client.sendRawTransaction([signedOptIn.blob, signedTransfer.blob]).do()
-    const txID = response.txID
-
-    // Wait for confirmation
-    await waitForConfirmation(txID)
-
-    console.log(`✅ NFT transferred to student: ${studentAddress}`)
-
+    
+    console.log(`✅ NFT ${assetId} transferred to student ${studentAccount.addr}`)
+    return studentAccount.addr // Return the actual student address used
   } catch (error) {
     console.error('Error transferring NFT to student:', error)
-    throw new Error(`Failed to transfer NFT: ${error}`)
+    throw error
   }
 }
 
@@ -238,3 +207,4 @@ export function generateNftMetadata(metadata: CredentialNFTMetadata): object {
     }
   }
 }
+

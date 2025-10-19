@@ -1,0 +1,19 @@
+[algokit]
+min_version = "v2.0.0"
+
+[project]
+type = 'frontend'
+name = 'web'
+
+[project.run]
+build = { commands = ['npm install', 'npm run build'], description = 'Install dependencies and build' }
+dev = { commands = ['npm run dev'], description = 'Start development server' }
+lint = { commands = ['npm run lint'], description = 'Run linting' }
+
+[project.env]
+NEXT_PUBLIC_ALGOD_SERVER = "http://localhost:4001"
+NEXT_PUBLIC_ALGOD_TOKEN = ""
+NEXT_PUBLIC_INDEXER_SERVER = "http://localhost:8980"
+NEXT_PUBLIC_INDEXER_TOKEN = ""
+NEXT_PUBLIC_APP_ID = "1013"
+NEXT_PUBLIC_ADMIN_ADDRESS = "SACYCQTR3RVKZQOYYYPWEKS3AZZUOTHLRSSE4LGYEA5YPQRU26ZTIJIXBQ"

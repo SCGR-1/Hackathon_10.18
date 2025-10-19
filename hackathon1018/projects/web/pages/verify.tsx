@@ -3,6 +3,7 @@ import { searchCredentialsBySubjectLocalNet, revokeCredential } from "../lib/blo
 import Layout from "../components/Layout"
 import { useAuth } from "../contexts/AuthContext"
 import Link from "next/link"
+import { GraduationCap, Award, Shield } from 'lucide-react'
 
 const APP_ID = Number(process.env.NEXT_PUBLIC_APP_ID || 0)
 
@@ -13,7 +14,7 @@ export default function Verify() {
   const [showRevokeModal, setShowRevokeModal] = useState<boolean>(false)
   const [credentialToRevoke, setCredentialToRevoke] = useState<any>(null)
   const [isRevoking, setIsRevoking] = useState<boolean>(false)
-  const [filterType, setFilterType] = useState<'All' | 'Education' | 'Visa' | 'Employment'>('All')
+  const [filterType, setFilterType] = useState<'All' | 'Education' | 'Visa' | 'Certification'>('All')
 
   // Auto-load credentials for students
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function Verify() {
       status = "PENDING"
     } else if (cred.credentialType === 'VisaCredential' && Date.now() > cred.expiresAt * 1000) {
       status = "EXPIRED"
-    } else if ((cred.credentialType === 'EducationCredential' || cred.credentialType === 'EmploymentCredential') && Date.now() > cred.expiresAt * 1000) {
+    } else if ((cred.credentialType === 'EducationCredential' || cred.credentialType === 'CertificationCredential') && Date.now() > cred.expiresAt * 1000) {
       status = "COMPLETED"
     }
     
@@ -82,14 +83,18 @@ export default function Verify() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ fontSize: '24px', marginRight: '12px' }}>{icon}</span>
               <h3 style={{ 
                 margin: 0, 
                 color: isDarkMode ? '#ffffff' : '#1f2937', 
                 fontSize: '20px',
                 fontWeight: '600'
               }}>
-                {cred.credentialType === 'EducationCredential' ? 'Education Credential' : cred.credentialType === 'VisaCredential' ? 'Visa Credential' : 'Employment Credential'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {cred.credentialType === 'EducationCredential' ? <GraduationCap size={20} /> : 
+                   cred.credentialType === 'VisaCredential' ? <Shield size={20} /> : 
+                   <Award size={20} />}
+                  {cred.credentialType === 'EducationCredential' ? 'Education Credential' : cred.credentialType === 'VisaCredential' ? 'Visa Credential' : 'Certification Credential'}
+                </div>
               </h3>
             </div>
             
@@ -339,9 +344,9 @@ export default function Verify() {
                     )}
                   </>
                 )}
-                {cred.credentialType === 'EmploymentCredential' && (
+                {cred.credentialType === 'CertificationCredential' && (
                   <>
-                    {cred.claim.company && (
+                    {cred.claim.certificationBody && (
                       <div>
                         <div style={{ 
                           fontSize: '12px', 
@@ -351,18 +356,18 @@ export default function Verify() {
                           letterSpacing: '0.5px',
                           marginBottom: '4px'
                         }}>
-                          Company
+                          Certification Body
                         </div>
                         <div style={{ 
                           fontSize: '14px', 
                           color: isDarkMode ? '#d1d5db' : '#374151',
                           fontWeight: '500'
                         }}>
-                          {cred.claim.company}
+                          {cred.claim.certificationBody}
                         </div>
                       </div>
                     )}
-                    {cred.claim.position && (
+                    {cred.claim.examType && (
                       <div>
                         <div style={{ 
                           fontSize: '12px', 
@@ -372,18 +377,18 @@ export default function Verify() {
                           letterSpacing: '0.5px',
                           marginBottom: '4px'
                         }}>
-                          Position
+                          Exam Type
                         </div>
                         <div style={{ 
                           fontSize: '14px', 
                           color: isDarkMode ? '#d1d5db' : '#374151',
                           fontWeight: '500'
                         }}>
-                          {cred.claim.position}
+                          {cred.claim.examType}
                         </div>
                       </div>
                     )}
-                    {cred.claim.department && (
+                    {cred.claim.score && (
                       <div>
                         <div style={{ 
                           fontSize: '12px', 
@@ -393,18 +398,18 @@ export default function Verify() {
                           letterSpacing: '0.5px',
                           marginBottom: '4px'
                         }}>
-                          Department
+                          Score
                         </div>
                         <div style={{ 
                           fontSize: '14px', 
                           color: isDarkMode ? '#d1d5db' : '#374151',
                           fontWeight: '500'
                         }}>
-                          {cred.claim.department}
+                          {cred.claim.score}
                         </div>
                       </div>
                     )}
-                    {cred.claim.salary && (
+                    {cred.claim.validityPeriod && (
                       <div>
                         <div style={{ 
                           fontSize: '12px', 
@@ -414,14 +419,14 @@ export default function Verify() {
                           letterSpacing: '0.5px',
                           marginBottom: '4px'
                         }}>
-                          Salary
+                          Validity Period
                         </div>
                         <div style={{ 
                           fontSize: '14px', 
                           color: isDarkMode ? '#d1d5db' : '#374151',
                           fontWeight: '500'
                         }}>
-                          {cred.claim.salary}
+                          {cred.claim.validityPeriod}
                         </div>
                       </div>
                     )}
@@ -579,7 +584,7 @@ export default function Verify() {
     if (credential.revoked) return false
     if (userRole === 'Institution' && credential.credentialType === 'EducationCredential') return true
     if (userRole === 'Authority' && credential.credentialType === 'VisaCredential') return true
-    if (userRole === 'Employer' && credential.credentialType === 'EmploymentCredential') return true
+    if (userRole === 'Certifier' && credential.credentialType === 'CertificationCredential') return true
     return false
   }
 
@@ -587,7 +592,7 @@ export default function Verify() {
     if (filterType === 'All') return userCredentials
     if (filterType === 'Education') return userCredentials.filter(cred => cred.credentialType === 'EducationCredential')
     if (filterType === 'Visa') return userCredentials.filter(cred => cred.credentialType === 'VisaCredential')
-    if (filterType === 'Employment') return userCredentials.filter(cred => cred.credentialType === 'EmploymentCredential')
+    if (filterType === 'Certification') return userCredentials.filter(cred => cred.credentialType === 'CertificationCredential')
     return userCredentials
   }
 
@@ -708,7 +713,7 @@ Search would look for credentials for: ${subjectAddress}`)
               borderRadius: '12px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              {(['All', 'Education', 'Visa', 'Employment'] as const).map((type) => (
+              {(['All', 'Education', 'Visa', 'Certification'] as const).map((type) => (
           <button 
                   key={type}
                   onClick={() => setFilterType(type)}
@@ -817,7 +822,7 @@ Search would look for credentials for: ${subjectAddress}`)
                   borderRadius: '12px',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}>
-                  {(['All', 'Education', 'Visa', 'Employment'] as const).map((type) => (
+                  {(['All', 'Education', 'Visa', 'Certification'] as const).map((type) => (
           <button 
                       key={type}
                       onClick={() => setFilterType(type)}
