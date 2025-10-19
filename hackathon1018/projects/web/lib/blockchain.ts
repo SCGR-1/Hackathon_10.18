@@ -203,7 +203,8 @@ export async function mintNftAndIssueCredential(
       params.credentialId,
       params.subject,
       params.hashHex,
-      finalMetadataUrl
+      finalMetadataUrl,
+      params.claim
     )
     
     console.log('✅ NFT minted successfully! ASA ID:', nftAsaId)

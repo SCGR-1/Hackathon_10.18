@@ -19,7 +19,7 @@ export const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || 'SACYCQTR3
 export const ADMIN_MNEMONIC = process.env.NEXT_PUBLIC_ADMIN_MNEMONIC || ''
 
 // App configuration
-export const APP_ID = Number(process.env.NEXT_PUBLIC_APP_ID || 0)
+export const APP_ID = 1013
 
 // Create singleton Algod client
 let algodClient: algosdk.Algodv2 | null = null

@@ -2,7 +2,7 @@ import algosdk from 'algosdk'
 
 // Smart Contract Configuration
 const CONTRACT_CONFIG = {
-  appId: Number(process.env.NEXT_PUBLIC_APP_ID || 1013), // Default app ID
+  appId: 1013, // Hardcoded app ID
   network: process.env.NEXT_PUBLIC_ALGOD_SERVER?.includes('localhost') ? 'localnet' : 'testnet'
 }
 

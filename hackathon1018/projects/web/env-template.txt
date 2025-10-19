@@ -13,3 +13,7 @@ NEXT_PUBLIC_ADMIN_ADDRESS=SACYCQTR3RVKZQOYYYPWEKS3AZZUOTHLRSSE4LGYEA5YPQRU26ZTIJ
 
 # Admin Account (Optional - will use LocalNet dispenser if not set)
 # NEXT_PUBLIC_ADMIN_MNEMONIC=your_mnemonic_here
+
+# OpenAI Configuration (Optional - for AI-generated NFT art)
+# OPENAI_API_KEY=your_openai_api_key_here
+# NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key_here

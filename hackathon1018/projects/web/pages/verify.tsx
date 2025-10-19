@@ -4,8 +4,9 @@ import Layout from "../components/Layout"
 import { useAuth } from "../contexts/AuthContext"
 import Link from "next/link"
 import { GraduationCap, Award, Shield } from 'lucide-react'
+import { NFTArtDisplay } from "../components/NFTArtDisplay"
 
-const APP_ID = Number(process.env.NEXT_PUBLIC_APP_ID || 0)
+const APP_ID = 1013
 
 export default function Verify() {
   const { userRole, isLoading, isDarkMode } = useAuth()
@@ -133,6 +134,22 @@ export default function Verify() {
             </div>
           </div>
         </div>
+        {/* NFT Art Display */}
+        <div style={{ 
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
+          <NFTArtDisplay
+            credentialId={cred.credentialId}
+            credentialType={cred.credentialType}
+            artUrl={cred.artUrl}
+            artPrompt={cred.artPrompt}
+            isAIGenerated={cred.isAIGenerated}
+            style={{ width: '200px', height: '200px' }}
+          />
+        </div>
+
         {/* Unified Information Section */}
         <div style={{ 
           padding: '20px',

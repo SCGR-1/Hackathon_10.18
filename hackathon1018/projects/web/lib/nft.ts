@@ -2,6 +2,7 @@ import algosdk from 'algosdk'
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
 import { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount'
 import { getAlgodClient, getAdminAccount, waitForConfirmation, getSuggestedParams, encodeAddress } from './algorand'
+import { generateCredentialArt, ArtGenerationParams } from './openai-art'
 
 export interface CredentialNFTMetadata {
   credentialId: string
@@ -12,21 +13,26 @@ export interface CredentialNFTMetadata {
   expiresAt: string
   hash: string
   claim: Record<string, unknown>
+  artUrl?: string
+  artPrompt?: string
+  isAIGenerated?: boolean
 }
 
 /**
- * Creates a commemorative NFT for a credential
+ * Creates a commemorative NFT for a credential with AI-generated art
  * @param credentialId - Unique identifier for the credential
  * @param studentAddress - Algorand address of the student
  * @param credentialHash - SHA-256 hash of the credential
  * @param metadataUrl - URL pointing to off-chain metadata
+ * @param claim - Credential claim data for art generation
  * @returns Promise<number> - The created ASA ID
  */
 export async function mintCredentialNft(
   credentialId: string,
   studentAddress: string,
   credentialHash: string,
-  metadataUrl?: string
+  metadataUrl?: string,
+  claim?: Record<string, unknown>
 ): Promise<number> {
   try {
     // Debug environment variables
@@ -63,6 +69,37 @@ export async function mintCredentialNft(
 
     // Create asset name from credential ID (truncated to fit 32 char limit)
     const assetName = `CRD-${credentialId.slice(-20)}`
+    
+    // Generate AI art for the NFT
+    console.log('🎨 Generating art for NFT...')
+    let artUrl = ''
+    let artPrompt = ''
+    let isAIGenerated = false
+    
+    if (claim) {
+      try {
+        const artParams: ArtGenerationParams = {
+          credentialId,
+          credentialType: claim.credentialType as any || 'EducationCredential',
+          institution: claim.institution as string,
+          degree: claim.degree as string,
+          fieldOfStudy: claim.fieldOfStudy as string,
+          country: claim.country as string,
+          visaType: claim.visaType as string,
+          certificationBody: claim.certificationBody as string,
+          examType: claim.examType as string
+        }
+        
+        const artResult = await generateCredentialArt(artParams)
+        artUrl = artResult.imageUrl || ''
+        artPrompt = artResult.prompt || ''
+        isAIGenerated = !artResult.isPlaceholder
+        
+        console.log(`✅ Art generated: ${isAIGenerated ? 'AI-generated' : 'Placeholder'}`)
+      } catch (error) {
+        console.warn('Art generation failed, using default:', error)
+      }
+    }
     
     // Use default metadata URL if none provided
     const finalMetadataUrl = metadataUrl || `https://educhain.app/nft/${credentialId}`
@@ -163,47 +200,69 @@ export function createMetadataUrl(credentialId: string, baseUrl?: string): strin
 }
 
 /**
- * Generates metadata for a credential NFT
+ * Generates metadata for a credential NFT with AI art
  * @param metadata - Credential metadata
  * @returns object - NFT metadata object
  */
 export function generateNftMetadata(metadata: CredentialNFTMetadata): object {
+  const attributes = [
+    {
+      trait_type: 'Credential Type',
+      value: metadata.credentialType
+    },
+    {
+      trait_type: 'Credential ID',
+      value: metadata.credentialId
+    },
+    {
+      trait_type: 'Issuer',
+      value: metadata.issuer
+    },
+    {
+      trait_type: 'Subject',
+      value: metadata.subject
+    },
+    {
+      trait_type: 'Issued At',
+      value: metadata.issuedAt
+    },
+    {
+      trait_type: 'Expires At',
+      value: metadata.expiresAt
+    },
+    {
+      trait_type: 'Hash',
+      value: metadata.hash
+    }
+  ]
+
+  // Add art-related attributes if available
+  if (metadata.artUrl) {
+    attributes.push({
+      trait_type: 'Art Type',
+      value: metadata.isAIGenerated ? 'AI Generated' : 'Placeholder'
+    })
+  }
+
+  if (metadata.artPrompt) {
+    attributes.push({
+      trait_type: 'Art Prompt',
+      value: metadata.artPrompt
+    })
+  }
+
   return {
     name: `Credential NFT - ${metadata.credentialId}`,
-    description: `Commemorative NFT for ${metadata.credentialType} credential`,
-    image: `https://api.educhain.com/images/${metadata.credentialId}.png`,
-    attributes: [
-      {
-        trait_type: 'Credential Type',
-        value: metadata.credentialType
-      },
-      {
-        trait_type: 'Credential ID',
-        value: metadata.credentialId
-      },
-      {
-        trait_type: 'Issuer',
-        value: metadata.issuer
-      },
-      {
-        trait_type: 'Subject',
-        value: metadata.subject
-      },
-      {
-        trait_type: 'Issued At',
-        value: metadata.issuedAt
-      },
-      {
-        trait_type: 'Expires At',
-        value: metadata.expiresAt
-      },
-      {
-        trait_type: 'Hash',
-        value: metadata.hash
-      }
-    ],
+    description: `Commemorative NFT for ${metadata.credentialType} credential${metadata.isAIGenerated ? ' with AI-generated art' : ''}`,
+    image: metadata.artUrl || `https://api.educhain.com/images/${metadata.credentialId}.png`,
+    attributes,
     properties: {
-      credential: metadata
+      credential: metadata,
+      art: {
+        url: metadata.artUrl,
+        prompt: metadata.artPrompt,
+        isAIGenerated: metadata.isAIGenerated
+      }
     }
   }
 }
