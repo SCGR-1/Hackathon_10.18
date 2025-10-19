@@ -27,10 +27,10 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/wallet": [
+    "/verify": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/wallet.js"
+      "static/chunks/pages/verify.js"
     ]
   },
   "ampFirstPages": []

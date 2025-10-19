@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth, UserRole } from '../contexts/AuthContext'
+import { Sun, Moon } from 'lucide-react'
+import LoginModal from './LoginModal'
+import StudentLoginModal from './StudentLoginModal'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -21,15 +24,13 @@ export default function Layout({ children }: LayoutProps) {
     }
   }
 
-  const handleStudentLogin = () => {
-    if (studentAddress.trim()) {
-      // Store the student address in localStorage for this session
-      localStorage.setItem('studentAddress', studentAddress.trim())
-      login('Student')
-      setShowStudentModal(false)
-      setShowLoginModal(false) // Also close the main login modal
-      setStudentAddress('')
-    }
+  const handleStudentLogin = (address: string) => {
+    // Store the student address in localStorage for this session
+    localStorage.setItem('studentAddress', address)
+    login('Student')
+    setShowStudentModal(false)
+    setShowLoginModal(false) // Also close the main login modal
+    setStudentAddress('')
   }
 
   // Auto-fill student address from environment variable
@@ -125,7 +126,7 @@ export default function Layout({ children }: LayoutProps) {
                   }}
                   title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
-                  {isDarkMode ? '☀️' : '🌙'}
+                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
               </>
             )}
@@ -181,7 +182,7 @@ export default function Layout({ children }: LayoutProps) {
                   }}
                   title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
-                  {isDarkMode ? '☀️' : '🌙'}
+                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
               </>
             )}
@@ -201,270 +202,22 @@ export default function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Login Modal */}
-      {showLoginModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          onClick={() => setShowLoginModal(false)}
-        >
-          <div 
-            style={{
-              backgroundColor: isDarkMode ? '#1f2937' : 'white',
-              padding: '2rem',
-              borderRadius: '10px',
-              boxShadow: isDarkMode ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 4px 20px rgba(0, 0, 0, 0.15)',
-              maxWidth: '400px',
-              width: '90%',
-              position: 'relative'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowLoginModal(false)}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: isDarkMode ? '#9ca3af' : '#6c757d',
-                padding: '0',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ×
-            </button>
-            
-            <h2 style={{ 
-              marginTop: 0, 
-              marginBottom: '1.5rem', 
-              textAlign: 'center',
-              color: isDarkMode ? '#ffffff' : '#000000'
-            }}>Select Your Role</h2>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <button
-                onClick={() => handleLogin('Student')}
-                style={{
-                  padding: '1rem',
-                  backgroundColor: '#6f42c1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(111,66,193,0.2)'
-                }}
-              >
-                🎓 Student
-                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
-                  Verify Credentials Only
-                </div>
-              </button>
-              
-              <button
-                onClick={() => handleLogin('Employer')}
-                style={{
-                  padding: '1rem',
-                  backgroundColor: '#ff6b35',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(255,107,53,0.2)'
-                }}
-              >
-                🏢 Employer
-                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
-                  Issue Employment Credentials
-                </div>
-              </button>
-              
-              <button
-                onClick={() => handleLogin('Institution')}
-                style={{
-                  padding: '1rem',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(40,167,69,0.2)'
-                }}
-              >
-                🏫 Institution
-                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
-                  Issue Education Credentials
-                </div>
-              </button>
-              
-              <button
-                onClick={() => handleLogin('Authority')}
-                style={{
-                  padding: '1rem',
-                  backgroundColor: '#0070f3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(0,112,243,0.2)'
-                }}
-              >
-                🏛️ Authority
-                <div style={{ fontSize: '0.8rem', opacity: 0.9, marginTop: '0.25rem' }}>
-                  Issue Visa Credentials
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLogin={handleLogin}
+        isDarkMode={isDarkMode}
+      />
 
       {/* Student Login Modal */}
-      {showStudentModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          onClick={() => setShowStudentModal(false)}
-        >
-          <div 
-            style={{
-              backgroundColor: isDarkMode ? '#1f2937' : 'white',
-              padding: '2rem',
-              borderRadius: '10px',
-              boxShadow: isDarkMode ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 4px 20px rgba(0, 0, 0, 0.15)',
-              maxWidth: '400px',
-              width: '90%',
-              position: 'relative'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowStudentModal(false)}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: isDarkMode ? '#9ca3af' : '#6c757d',
-                padding: '0',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ×
-            </button>
-            
-            <h2 style={{ 
-              marginTop: 0, 
-              marginBottom: '1.5rem', 
-              textAlign: 'center', 
-              color: isDarkMode ? '#ffffff' : '#6f42c1' 
-            }}>
-              🎓 Student Login
-            </h2>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '0.5rem', 
-                fontWeight: '500',
-                color: isDarkMode ? '#ffffff' : '#000000'
-              }}>
-                Your Algorand Address:
-              </label>
-              <input
-                type="text"
-                value={studentAddress}
-                onChange={(e) => setStudentAddress(e.target.value)}
-                placeholder="Enter your Algorand address..."
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: isDarkMode ? '#374151' : '#ffffff',
-                  color: isDarkMode ? '#ffffff' : '#000000',
-                  border: isDarkMode ? '1px solid #4b5563' : '1px solid #ddd',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.2s ease'
-                }}
-              />
-              <small style={{ 
-                color: isDarkMode ? '#9ca3af' : '#666', 
-                fontSize: '12px', 
-                marginTop: '0.25rem', 
-                display: 'block' 
-              }}>
-                This address will be used to load your credentials and NFTs
-              </small>
-            </div>
-            
-            <button
-              onClick={handleStudentLogin}
-              disabled={!studentAddress.trim()}
-              style={{
-                width: '100%',
-                padding: '12px 24px',
-                backgroundColor: studentAddress.trim() ? '#6f42c1' : '#ccc',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: studentAddress.trim() ? 'pointer' : 'not-allowed',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'all 0.2s ease',
-                boxShadow: studentAddress.trim() ? '0 2px 4px rgba(111,66,193,0.2)' : 'none'
-              }}
-            >
-              🎓 Login as Student
-            </button>
-          </div>
-        </div>
-      )}
+      <StudentLoginModal
+        isOpen={showStudentModal}
+        onClose={() => setShowStudentModal(false)}
+        onLogin={handleStudentLogin}
+        studentAddress={studentAddress}
+        setStudentAddress={setStudentAddress}
+        isDarkMode={isDarkMode}
+      />
     </div>
   )
 }
