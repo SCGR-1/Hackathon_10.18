@@ -796,34 +796,6 @@ Please check:
             </div>
 
 
-            <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              marginTop: '20px'
-            }}>
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#8b5cf6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#7c3aed'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#8b5cf6'
-                }}
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}

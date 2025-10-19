@@ -31,7 +31,18 @@ export default function Verify() {
     const issuedDate = new Date(cred.issuedAt * 1000).toISOString()
     const expiresDate = new Date(cred.expiresAt * 1000).toISOString()
     const validFromDate = cred.validFrom ? new Date(cred.validFrom).toISOString() : null
-    const status = cred.revoked ? "❌ REVOKED" : "ACTIVE"
+    
+    // Determine status based on revocation, start time, and expiration
+    let status = "ACTIVE"
+    if (cred.revoked) {
+      status = "REVOKED"
+    } else if (cred.validFrom && Date.now() < new Date(cred.validFrom).getTime()) {
+      status = "PENDING"
+    } else if (cred.credentialType === 'VisaCredential' && Date.now() > cred.expiresAt * 1000) {
+      status = "EXPIRED"
+    } else if ((cred.credentialType === 'EducationCredential' || cred.credentialType === 'EmploymentCredential') && Date.now() > cred.expiresAt * 1000) {
+      status = "COMPLETED"
+    }
     
     // Determine card color based on credential type and dark mode
     const cardColor = cred.credentialType === 'EducationCredential' 
@@ -88,19 +99,30 @@ export default function Verify() {
               alignItems: 'center',
               padding: '6px 12px',
               borderRadius: '20px',
-              backgroundColor: cred.revoked 
+              backgroundColor: status === 'REVOKED'
                 ? (isDarkMode ? '#7f1d1d' : '#fee2e2') 
+                : status === 'PENDING'
+                ? (isDarkMode ? '#581c87' : '#e9d5ff')
+                : status === 'EXPIRED'
+                ? (isDarkMode ? '#7c2d12' : '#fed7aa')
+                : status === 'COMPLETED'
+                ? (isDarkMode ? '#7c2d12' : '#fed7aa')
                 : (isDarkMode ? '#14532d' : '#dcfce7'),
-              color: cred.revoked 
+              color: status === 'REVOKED'
                 ? (isDarkMode ? '#fca5a5' : '#dc2626') 
+                : status === 'PENDING'
+                ? (isDarkMode ? '#c4b5fd' : '#7c3aed')
+                : status === 'EXPIRED'
+                ? (isDarkMode ? '#fed7aa' : '#ea580c')
+                : status === 'COMPLETED'
+                ? (isDarkMode ? '#fed7aa' : '#ea580c')
                 : (isDarkMode ? '#86efac' : '#16a34a'),
               fontSize: '14px',
               fontWeight: '600',
               textTransform: 'uppercase',
               letterSpacing: '0.5px'
             }}>
-              <span style={{ marginRight: cred.revoked ? '6px' : '0' }}>
-                {cred.revoked ? '🚫' : ''}
+              <span style={{ marginRight: '0' }}>
               </span>
               {status}
             </div>
@@ -115,6 +137,28 @@ export default function Verify() {
           marginBottom: '20px'
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {/* Credential ID */}
+            <div>
+              <div style={{ 
+                fontSize: '12px', 
+                fontWeight: '600', 
+                color: isDarkMode ? '#9ca3af' : '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginBottom: '4px'
+              }}>
+                Credential ID
+              </div>
+              <div style={{ 
+                fontSize: '14px', 
+                color: isDarkMode ? '#d1d5db' : '#374151',
+                fontWeight: '500',
+                wordBreak: 'break-all'
+              }}>
+                {cred.credentialId}
+              </div>
+            </div>
+            
             {/* Credential Details */}
             {cred.claim && Object.keys(cred.claim).length > 0 && (
               <>
@@ -513,9 +557,10 @@ export default function Verify() {
         }
       } else {
         // For non-students, refresh the current search
-         const currentAddress = (document.querySelector('input[type="text"]') as HTMLInputElement)?.value
+        const currentAddress = (document.querySelector('input[placeholder*="student Algorand address"]') as HTMLInputElement)?.value ||
+                              (document.querySelector('input[placeholder*="Algorand address"]') as HTMLInputElement)?.value
         if (currentAddress) {
-          await handleSearch({ preventDefault: () => {} } as any)
+          await loadStudentCredentials(currentAddress)
         }
       }
       
@@ -534,6 +579,7 @@ export default function Verify() {
     if (credential.revoked) return false
     if (userRole === 'Institution' && credential.credentialType === 'EducationCredential') return true
     if (userRole === 'Authority' && credential.credentialType === 'VisaCredential') return true
+    if (userRole === 'Employer' && credential.credentialType === 'EmploymentCredential') return true
     return false
   }
 
@@ -642,61 +688,6 @@ Search would look for credentials for: ${subjectAddress}`)
                   </h1>
                 </div>
 
-                {/* Filter Buttons for Admins - Only show after search */}
-                {userCredentials.length > 0 && (
-                  <div style={{ 
-                    marginBottom: '20px', 
-                    display: 'flex', 
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      gap: '8px',
-                      backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
-                      padding: '4px',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}>
-                      {(['All', 'Education', 'Visa', 'Employment'] as const).map((type) => (
-          <button 
-                          key={type}
-                          onClick={() => setFilterType(type)}
-            style={{
-                            padding: '8px 16px',
-                            backgroundColor: filterType === type 
-                              ? (isDarkMode ? '#8b5cf6' : '#7c3aed') 
-                              : 'transparent',
-                            color: filterType === type 
-                              ? '#ffffff' 
-                              : (isDarkMode ? '#ffffff' : '#374151'),
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease',
-                            boxShadow: filterType === type 
-                              ? '0 2px 4px rgba(124,58,237,0.3)' 
-                              : 'none'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (filterType !== type) {
-                              e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb'
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (filterType !== type) {
-                              e.currentTarget.style.backgroundColor = 'transparent'
-                            }
-                          }}
-                        >
-                          {type}
-          </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
         
@@ -799,8 +790,73 @@ Search would look for credentials for: ${subjectAddress}`)
               >
                 Search
               </button>
-        </div>
+            </div>
           </form>
+
+          {/* Filter Buttons for Admins - Only show after search */}
+          {userCredentials.length > 0 && (
+            <div style={{
+              backgroundColor: isDarkMode ? '#2d1b69' : '#f8f9fa',
+              padding: '20px 20px 10px 20px',
+              borderRadius: '12px',
+              marginBottom: '10px',
+              border: 'none',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                marginBottom: '20px', 
+                display: 'flex', 
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '8px',
+                  backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
+                  padding: '4px',
+                  borderRadius: '12px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  {(['All', 'Education', 'Visa', 'Employment'] as const).map((type) => (
+          <button 
+                      key={type}
+                      onClick={() => setFilterType(type)}
+            style={{
+                        padding: '8px 16px',
+                        backgroundColor: filterType === type 
+                          ? (isDarkMode ? '#8b5cf6' : '#7c3aed') 
+                          : 'transparent',
+                        color: filterType === type 
+                          ? '#ffffff' 
+                          : (isDarkMode ? '#ffffff' : '#374151'),
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease',
+                        boxShadow: filterType === type 
+                          ? '0 2px 4px rgba(124,58,237,0.3)' 
+                          : 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (filterType !== type) {
+                          e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#e5e7eb'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (filterType !== type) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                      }}
+                    >
+                      {type}
+          </button>
+                  ))}
+                </div>
+              </div>
+        </div>
+          )}
         </div>
       )}
       
@@ -853,7 +909,8 @@ Search would look for credentials for: ${subjectAddress}`)
         }}
         onClick={() => setShowRevokeModal(false)}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: isDarkMode ? '#2d1b69' : 'white',
+            color: isDarkMode ? '#ffffff' : '#000000',
             padding: '30px',
             borderRadius: '12px',
             maxWidth: '500px',
@@ -866,26 +923,26 @@ Search would look for credentials for: ${subjectAddress}`)
             </h3>
             
             <div style={{ marginBottom: '20px' }}>
-              <p style={{ marginBottom: '10px' }}>
+              <p style={{ marginBottom: '10px', color: isDarkMode ? '#ffffff' : '#000000' }}>
                 <strong>Are you sure you want to revoke this credential?</strong>
               </p>
               <div style={{ 
-                backgroundColor: '#f8f9fa', 
+                backgroundColor: isDarkMode ? '#374151' : '#f8f9fa', 
                 padding: '15px', 
                 borderRadius: '8px',
-                border: '1px solid #dee2e6'
+                border: `1px solid ${isDarkMode ? '#4b5563' : '#dee2e6'}`
               }}>
-                <p style={{ margin: '0 0 8px 0' }}>
+                <p style={{ margin: '0 0 8px 0', color: isDarkMode ? '#ffffff' : '#000000' }}>
                   <strong>Credential ID:</strong> {credentialToRevoke.credentialId}
                 </p>
-                <p style={{ margin: '0 0 8px 0' }}>
+                <p style={{ margin: '0 0 8px 0', color: isDarkMode ? '#ffffff' : '#000000' }}>
                   <strong>Type:</strong> {credentialToRevoke.credentialType}
                 </p>
-                <p style={{ margin: '0 0 8px 0' }}>
+                <p style={{ margin: '0 0 8px 0', color: isDarkMode ? '#ffffff' : '#000000', wordBreak: 'break-all' }}>
                   <strong>Subject:</strong> {credentialToRevoke.subject}
                 </p>
                 {credentialToRevoke.claim && (
-                  <p style={{ margin: '0' }}>
+                  <p style={{ margin: '0', color: isDarkMode ? '#ffffff' : '#000000' }}>
                     <strong>Details:</strong> {JSON.stringify(credentialToRevoke.claim, null, 2)}
                   </p>
                 )}
@@ -893,13 +950,13 @@ Search would look for credentials for: ${subjectAddress}`)
             </div>
             
             <div style={{ 
-              backgroundColor: '#fff3cd', 
-              border: '1px solid #ffeaa7', 
+              backgroundColor: isDarkMode ? '#451a03' : '#fff3cd', 
+              border: `1px solid ${isDarkMode ? '#92400e' : '#ffeaa7'}`, 
               borderRadius: '8px', 
               padding: '15px',
               marginBottom: '20px'
             }}>
-              <p style={{ margin: 0, color: '#856404' }}>
+              <p style={{ margin: 0, color: isDarkMode ? '#fbbf24' : '#856404' }}>
                 <strong>⚠️ Warning:</strong> This action cannot be undone. The credential will be permanently marked as revoked.
               </p>
             </div>
